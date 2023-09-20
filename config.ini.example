@@ -1,3 +1,26 @@
-# url = https://my.tandoor.server:8080/recipes/         # The full url of the Tandoor application including protocol, name, port and path
-# token = tda_xxxxxxxxxxxxxxxxxxxxxxxxxxxxx             # Tandoor API token.
-# log = DEBUG                                           # valid values are INFO (default) and DEBUG
+[create-menu]
+# Use this config.ini file or set using command line switches
+# url : https://my.tandoor.server:8080/recipes/         # The full url of the Tandoor application including protocol, name, port and path
+# token : tda_xxxxxxxxxxxxxxxxxxxxxxxxxxxxx             # Tandoor API token.
+# log : DEBUG                                           # valid values are INFO (default) and DEBUG
+
+###  define which recipes to choose from.  If not defined, all recipes will be used.
+### If both are provided or if multiple filters are provided, all results will be used.
+# recipes : {  # recipe search parameters, see /docs/api/ for full list of parameters
+#    'query' : 'recipe name',
+#    'keywords_or' : [3, 4],
+#    'keywords_and' : [5, 6],
+#    'keywords_or_not' : [7, 8],
+#    'keywords_and_not' : [9, 10],
+#    'rating' : 4,
+#    'cookedon' : '-2023-01-01'  # tandoor requires a date, but to use a relative date for this purpose enter Xdays and the date will be formatted X days ago
+#    }
+# filter : []                                           # one or more IDs of CustomFilter that provides list of recipes to choose from.  When not provided will choose from all recipes.
+
+choices : 5                                             # number of recipes to choose
+# books : []
+# foods : []
+# keywords : []
+# ratings : []
+# cookedon : []
+# createdon : []

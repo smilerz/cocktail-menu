@@ -4,9 +4,11 @@ import requests
 
 
 class TandoorAPI:
-    def __init__(self, url, token, **kwargs):
-
+    def __init__(self, url, token, logger, **kwargs):
+        self.logger = logger
         self.token = token
+        self.page_size = kwargs.get('page_size', 100)
+        self.include_children = kwargs.get('include_children', True)
         if url and url[-1] == '/':
             self.url = f"{url}api/"
         else:
@@ -16,23 +18,42 @@ class TandoorAPI:
             'Authorization': f'Bearer {self.token}'
         }
 
-    def get_recipes(self):
+    def get_paged_results(self, url, params):
+        results = []
+        while url:
+            self.logger.debug(f'Connecting to tandoor api at url: {url}')
+            self.logger.debug(f'Connecting with params: {str(params)}')
+            if '?' in url:
+                params = None
+            response = requests.get(url, headers=self.headers, params=params)
+            content = json.loads(response.content)
+            new_results = content.get('results', [])
+            self.logger.debug(f'Retrieved {len(new_results)} results.')
+            results = results + new_results
+            url = content.get('next', None)
+
+            if response.status_code != 200:
+                self.logger.info(f"Failed to fetch recipes. Status code: {response.status_code}")
+                raise Exception(f"Failed to fetch recipes. Status code: {response.status_code}")
+        return results
+
+    def get_recipes(self, params={}, filters=[]):
         """
         Fetch a list of recipes from the API.
         Returns:
             list: A list of recipe objects in JSON-LD format.
         """
         url = f"{self.url}recipe/"
-
         recipes = []
-        while url:
-            response = requests.get(url, headers=self.headers)
-            content = json.loads(response.content)
-            recipes = recipes + content.get('results', [])
-            url = content.get('next', None)
+        if params:
+            params['include_children'] = self.include_children
+            params['page_size'] = self.page_size
+            # params={'filter':id}
+            recipes = self.get_paged_results(url, params)
+        for f in filters:
+            recipes += self.get_paged_results(url, {'page_size': self.page_size, 'filter': f})
 
-            if response.status_code != 200:
-                raise Exception(f"Failed to fetch recipes. Status code: {response.status_code}")
+        self.logger.debug(f'Returning {len(recipes)} total recipes.')
         return recipes
 
     def get_recipe_details(self, recipe_id):

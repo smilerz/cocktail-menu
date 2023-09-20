@@ -2,6 +2,7 @@ import logging
 import sys
 
 import configargparse
+import yaml
 
 #!/usr/bin/env python3
 from tandoor_api import TandoorAPI
@@ -76,11 +77,24 @@ def setup_logging(log='INFO'):
 
 
 def parse_args():
-	parser = configargparse.ArgumentParser(default_config_files=['./config.ini'], description='Synchronizes ID3 music ratings with a Plex media-server')
-	# parser.add_argument('--sync', nargs='*', default=['tracks'], help='Selects which items to sync: one or more of [tracks, playlists]')
+
+	parser = configargparse.ArgParser(
+		config_file_parser_class=configargparse.ConfigparserConfigFileParser,
+		default_config_files=['./config.ini'],
+		description='Create a custom menu from Tandoor with defined criteria.'
+	)
 	parser.add_argument('--log', default='info', help='Sets the logging level')
 	parser.add_argument('--url', type=str, required=True, help='The full url of the Tandoor server, including protocol, name, port and path')
 	parser.add_argument('--token', type=str, required=True, help='Tandoor API token.')
+	parser.add_argument('--recipes', type=yaml.safe_load, help='Selects which items to sync: one or more of [tracks, playlists]')
+	parser.add_argument('--filters', nargs='*', default=[], help='Selects which items to sync: one or more of [tracks, playlists]')
+	parser.add_argument('--choices', default=5, help='Number of recipes to choose')
+	parser.add_argument('--books', nargs='*', default=[], help='Selects which items to sync: one or more of [tracks, playlists]')
+	parser.add_argument('--foods', nargs='*', default=[], help='Selects which items to sync: one or more of [tracks, playlists]')
+	parser.add_argument('--keywords', nargs='*', default=[], help='Selects which items to sync: one or more of [tracks, playlists]')
+	parser.add_argument('--ratings', nargs='*', default=[], help='Selects which items to sync: one or more of [tracks, playlists]')
+	parser.add_argument('--cookedon', nargs='*', default=[], help='Selects which items to sync: one or more of [tracks, playlists]')
+	parser.add_argument('--createdon', nargs='*', default=[], help='Selects which items to sync: one or more of [tracks, playlists]')
 
 	return parser.parse_args()
 
@@ -88,6 +102,6 @@ def parse_args():
 if __name__ == "__main__":
 	args = parse_args()
 	logger = setup_logging(log=args.log)
-	tandoor = TandoorAPI(args.url, args.token)
-	recipes = tandoor.get_recipes()
+	tandoor = TandoorAPI(args.url, args.token, logger)
+	recipes = tandoor.get_recipes(params=args.recipes, filters=args.filters)
 	pass
