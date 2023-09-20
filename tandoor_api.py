@@ -1,32 +1,39 @@
+import json
+
 import requests
 
 
 class TandoorAPI:
-    def __init__(self, url, token):
+    def __init__(self, url, token, **kwargs):
 
         self.token = token
-        if url and url[-1]=='/':
-            self.url = url
+        if url and url[-1] == '/':
+            self.url = f"{url}api/"
         else:
-            self.url = f"{url}/"
+            self.url = f"{url}/api/"
         self.headers = {
             'Content-Type': 'application/json',
             'Authorization': f'Bearer {self.token}'
         }
 
-    def get_recipe_list(self):
+    def get_recipes(self):
         """
         Fetch a list of recipes from the API.
         Returns:
             list: A list of recipe objects in JSON-LD format.
         """
-        url = f"{self.url}/recipes"
-        response = requests.get(url)
+        url = f"{self.url}recipe/"
 
-        if response.status_code == 200:
-            return response.json()
-        else:
-            raise Exception(f"Failed to fetch recipes. Status code: {response.status_code}")
+        recipes = []
+        while url:
+            response = requests.get(url, headers=self.headers)
+            content = json.loads(response.content)
+            recipes = recipes + content.get('results', [])
+            url = content.get('next', None)
+
+            if response.status_code != 200:
+                raise Exception(f"Failed to fetch recipes. Status code: {response.status_code}")
+        return recipes
 
     def get_recipe_details(self, recipe_id):
         """

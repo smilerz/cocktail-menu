@@ -14,7 +14,6 @@ class Ingredient:
 
 
 
-
 class Recipe:
     def __init__(self, name, base_spirit, cocktail_style, last_made_date, star_rating, unused_count, ingredients):
         self.name = name
