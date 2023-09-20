@@ -1,0 +1,3 @@
+# url = https://my.tandoor.server:8080/recipes/         # The full url of the Tandoor application including protocol, name, port and path
+# token = tda_xxxxxxxxxxxxxxxxxxxxxxxxxxxxx             # Tandoor API token.
+# log = DEBUG                                           # valid values are INFO (default) and DEBUG
