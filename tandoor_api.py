@@ -41,7 +41,7 @@ class TandoorAPI:
         """
         Fetch a list of recipes from the API.
         Returns:
-            list: A list of recipe objects in JSON-LD format.
+            list: A list of recipe objects in tandoor recipe format.
         """
         url = f"{self.url}recipe/"
         recipes = []
@@ -72,22 +72,30 @@ class TandoorAPI:
         else:
             raise Exception(f"Failed to fetch recipe details. Status code: {response.status_code}")
 
-    def search_recipes(self, query):
+    def get_keyword_tree(self, kw_id, params={}):
         """
-        Search for recipes based on a query string.
-        Args:
-            query (str): The search query.
+        Fetch a keyword and it's descendants from the API.
         Returns:
-            list: A list of recipe objects matching the query in JSON-LD format.
+            list: A list of keyword objects in tandoor format.
         """
-        url = f"{self.base_url}/recipes/search"
-        params = {'q': query}
-        response = requests.get(url, params=params)
 
-        if response.status_code == 200:
-            return response.json()
-        else:
-            raise Exception(f"Recipe search failed. Status code: {response.status_code}")
+        url = f"{self.url}keyword/"
+        params['tree'] = kw_id
+        params['page_size'] = 100
+        keywords = self.get_paged_results(url, params)
 
-    # You can add more methods for creating, updating, or deleting recipes as needed.
+        self.logger.debug(f'Returning {len(keywords)} total keywords.')
+        return keywords
 
+    def get_food_tree(self, food_id, params={}):
+        """
+        Fetch a food and it's descendants from the API.
+        Returns:
+            list: A list of food objects in tandoor format.
+        """
+
+        url = f"{self.url}food/"
+        foods = self.get_paged_results(url, params)
+
+        self.logger.debug(f'Returning {len(foods)} total food.')
+        return foods
