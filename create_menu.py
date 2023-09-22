@@ -44,6 +44,11 @@ class Menu:
 				constraint['condition'] = list(set([Keyword(k) for k in kw_tree]))
 		pass
 
+	def prepare_data(self):
+		createdon = None
+		rating = None
+		cookedon = None
+
 
 def parse_args():
 	parser = configargparse.ArgParser(
