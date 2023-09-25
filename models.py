@@ -48,6 +48,19 @@ class Recipe(SetEnabledObjects):
     def populate_food(self):
         pass
 
+    @staticmethod
+    def recipesWithKeyword(recipes, keywords):
+        '''
+        filters a list of recipes that contain any of a list of keywords
+        recipes: list of Recipes
+        keywords: list of Keywords
+
+        Returns:
+            filtered list of Recipes
+        '''
+        return [r for r in recipes if any(k in r.keywords for k in [x.id for x in keywords])]
+
+
 
 class Keyword(SetEnabledObjects):
     def __init__(self, json_kw):

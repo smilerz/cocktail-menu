@@ -6,21 +6,24 @@ import configargparse
 import yaml
 
 from models import Keyword, Recipe
+from solver import RecipePicker
 from tandoor_api import TandoorAPI
-from utils import setup_logging
+from utils import setup_logging, str2bool
 
 
 class Menu:
+	recipe_picker = None
 	def __init__(self, options):
 		self.options = options
 		self.include_children = self.options.include_children
 		self.logger = setup_logging(log=self.options.log)
 		self.tandoor = TandoorAPI(self.options.url, self.options.token, self.logger)
-		self.choices = self.options.choices
+		self.choices = int(self.options.choices)
 		self.recipes = []
-		self.solver = None
 
 		self.keyword_constraints = [json.loads(kw.replace("'", '"')) for kw in self.options.keywords]
+		for kc in self.keyword_constraints:
+			kc['count'] = int(kc['count'])
 
 	def prepare_recipes(self):
 		for r in self.tandoor.get_recipes(params=self.options.recipes, filters=self.options.filters):
@@ -42,12 +45,22 @@ class Menu:
 				for kw in constraint['condition']:
 					kw_tree += self.tandoor.get_keyword_tree(kw)
 				constraint['condition'] = list(set([Keyword(k) for k in kw_tree]))
-		pass
 
 	def prepare_data(self):
+		self.prepare_recipes()
+		self.prepare_keywords()
+		self.prepare_foods()
+		self.prepare_books()
 		createdon = None
 		rating = None
 		cookedon = None
+
+	def select_recipes(self):
+		self.recipe_picker = RecipePicker(self.recipes, self.choices, logger=self.logger)
+		for c in self.keyword_constraints:
+			exclude = str2bool(c.get('exclude', False))
+			self.recipe_picker.add_keyword_constraint(c['condition'], c['count'], c['operator'], exclude)
+		return self.recipe_picker.solve()
 
 
 def parse_args():
@@ -76,7 +89,13 @@ def parse_args():
 if __name__ == "__main__":
 	args = parse_args()
 	menu = Menu(args)
-	menu.prepare_recipes()
-	menu.prepare_keywords()
+	menu.prepare_data()
+	recipes = menu.select_recipes()
 
+	menu.logger.info(f'Selected {len(recipes)} recipes for the menu.')
+	if menu.logger.level >= 10:
+		for r in recipes:
+			menu.logger.debug(f'Selected recipe {r} for the menu.')
+			for kw in r.keywords:
+				menu.logger.debug(f'Selected recipe {recipes} contains keywords {kw}.')
 	pass

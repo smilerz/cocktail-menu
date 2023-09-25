@@ -9,6 +9,7 @@ class InfoFilter(logging.Filter):
 def relative_date(string):
     return string
 
+
 def setup_logging(log='INFO'):
 	log_levels = {
 		'CRITICAL': logging.CRITICAL,
@@ -62,3 +63,12 @@ def setup_logging(log='INFO'):
 		ch_std.setLevel(level)
 		logger.addHandler(ch_std)
 	return logger
+
+
+def str2bool(v):
+	if type(v) == bool or v is None:
+		return v
+	elif type(v) == int or type(v) == float:
+		return v == 1
+	else:
+		return v.lower() in ("yes", "true", "1")
