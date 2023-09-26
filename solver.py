@@ -2,8 +2,6 @@ import random
 
 from pulp import LpMaximize, LpProblem, LpVariable, lpSum, value
 
-from models import Recipe
-
 
 class RecipePicker:
     solver = None
@@ -45,8 +43,7 @@ class RecipePicker:
         self.logger.debug(f'Added constraint {operator} {numrecipes}.  Found {len(found_recipes)} recipes that contain the selected food(s).')
         self.numcriteria += 1
 
-    def add_keyword_constraint(self, keywords, numrecipes, operator, exclude=False):
-        found_recipes = Recipe.recipesWithKeyword(self.recipes, keywords)
+    def add_keyword_constraint(self, found_recipes, numrecipes, operator, exclude=False):
         if exclude:
             found_recipes = list(set(self.recipes) - set(found_recipes))
 
@@ -60,26 +57,26 @@ class RecipePicker:
             self.solver += lpSum(self.recipe_vars[i] for i in [r.id for r in found_recipes]) != numrecipes
         else:
             raise ValueError(f'Invalid constraint operator: {operator}')
-        self.logger.debug(f'Added constraint {operator} {numrecipes}.  Found {len(found_recipes)} recipes that contain the selected keyword(s): {keywords}.')
+        self.logger.debug(f'Added constraint {operator} {numrecipes}.  Found {len(found_recipes)} recipes that contain the selected keyword(s).')
+        self.numcriteria += 1
+
+    def add_rating_constraints(self, found_recipes, numrecipes, operator, exclude=False):
+        if exclude:
+            found_recipes = list(set(self.recipes) - set(found_recipes))
+
+        if operator == ">=":
+            self.solver += lpSum(self.recipe_vars[i] for i in [r.id for r in found_recipes]) >= numrecipes
+        elif operator == "<=":
+            self.solver += lpSum(self.recipe_vars[i] for i in [r.id for r in found_recipes]) <= numrecipes
+        elif operator == "==":
+            self.solver += lpSum(self.recipe_vars[i] for i in [r.id for r in found_recipes]) == numrecipes
+        elif operator == "!=":
+            self.solver += lpSum(self.recipe_vars[i] for i in [r.id for r in found_recipes]) != numrecipes
+        else:
+            raise ValueError(f'Invalid constraint operator: {operator}')
+        self.logger.debug(f'Added constraint {operator} {numrecipes}.  Found {len(found_recipes)} recipes that contain the selected rating.')
         self.numcriteria += 1
 
     def solve(self):
-
         self.solver.solve()
         return [r for r in self.recipes if value(self.recipe_vars[r.id]) == 1]
-
-
-
-# class MenuPlanner:
-
-
-#   # Other constraint methods
-
-#   def get_recent_recipes(self, days):
-#     # implementation
-
-#   def get_five_star_not_recent(self, days):
-#     # implementation
-
-#   def get_unused_recipes(self):
-#     # implementation

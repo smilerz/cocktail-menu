@@ -21,9 +21,9 @@ cache: 240                                              # Minutes to cache Tando
 choices : 5                                             # number of recipes to choose
 ### conditions are all list of dicts of the format {condition:xx, count:yy, operator: [>= or <= or ==]}
 ###
-# books : []  # condition = ID or list of IDs
-# foods : []  # condition = ID or list of IDs
-# keywords : [{"condition":[73, 273],"count":"1", "operator":">="},{"condition":47,"count":"2","operator":"==", 'except':[99]},{"condition":1001,"count":"3","operator":"<=", 'exclude':1}]
-# ratings : []  # condition = number between 0 and 5
+# book : []  # condition = ID or list of IDs
+# food : []  # condition = ID or list of IDs
+# keyword : [{"condition":[73, 273],"count":"1", "operator":">="},{"condition":47,"count":"2","operator":"==", 'except':[99]},{"condition":1001,"count":"3","operator":"<=", 'exclude':1}]
+# rating : [{"condition":3.1,"count":"1", "operator":"=="}]  # Condtion = number between -5 and 5.  Negative value implies lessthan comparison.
 # cookedon : []  # condition = date in YYYY-MM-DD format (use 'XXdays' for relative date XX days ago)
 # createdon : []  # condition = date in YYYY-MM-DD format (use 'XXdays' for relative date XX days ago)

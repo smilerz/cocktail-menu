@@ -1,7 +1,8 @@
 import logging
+import re
 import shelve
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from functools import wraps
 from uuid import NAMESPACE_OID, uuid3
 
@@ -19,8 +20,13 @@ class InfoFilter(logging.Filter):
 		return rec.levelno in (logging.DEBUG, logging.INFO)
 
 
-def relative_date(string):
-    return string
+def format_date(string):
+	if validate_date_string(string):
+		return string
+	lessthan, offset, interval = split_offset(string)
+	# TODO support more time intervals that days
+	offset = timedelta(days=offset)
+	return datetime.now(timezone.utc) - offset, lessthan
 
 
 def setup_logging(log='INFO'):
@@ -104,3 +110,33 @@ def cached(ttl=240):
 
 		return wrapper
 	return decorator
+
+
+def validate_date_string(date_str):
+	# Define the regex pattern
+	pattern = r'^-?\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$'
+
+	# Use re.match to check if the string matches the pattern
+	if re.match(pattern, date_str):
+		return True
+	else:
+		return False
+
+
+def split_offset(s):
+	# Define the regex pattern to match the desired format
+	pattern = r'^(-?)(\d+)([dD]?[aA]?[yY]?[sS]?)$'
+
+	# Use re.match to extract the parts of the string
+	match = re.match(pattern, s)
+
+	if match:
+		# Extract and assign values to variables
+		lessthan = match.group(1) == '-'
+		offset = int(match.group(2))
+		interval = match.group(3).lower()  # Convert to lowercase for case-insensitivity
+		return lessthan, offset, interval
+
+	else:
+		# Return None or raise an exception for invalid input
+		raise ValueError(f"Invalid time offset format: {s}.  Value must be in form of '-XXdays'")

@@ -41,7 +41,6 @@ class Recipe(SetEnabledObjects):
         self.rating = json_recipe['rating']
         self.ingredients = None  # List of Ingredient objects
 
-
     @staticmethod
     def recipesWithKeyword(recipes, keywords):
         '''
@@ -54,6 +53,39 @@ class Recipe(SetEnabledObjects):
         '''
         return [r for r in recipes if any(k in r.keywords for k in [x.id for x in keywords])]
 
+    @staticmethod
+    def recipesWithDate(recipes, field, date, after=True):
+        '''
+        filters a list of recipes based on a date condition
+        recipes: list of Recipes
+        field: field to compare: either createdon or cookedon
+        date: (datetime) date to filter field on
+        after: (bool) filter recipes after provided date
+
+        Returns:
+            filtered list of Recipes
+        '''
+        if after:
+            return [r for r in recipes if (d := getattr(r, field, None)) is not None and d > date]
+
+        else:
+            return [r for r in recipes if (d := getattr(r, field, None) is not None) and d < date]
+
+    @staticmethod
+    def recipesWithRating(recipes, rating):
+        '''
+        filters a list of recipes based on rating
+        recipes: list of Recipes
+        rating: number between -5 and 5.  Negative value implies lessthan comparison.
+
+        Returns:
+            filtered list of Recipes
+        '''
+        lessthan = rating < 0
+        if lessthan:
+            return [r for r in recipes if getattr(r, 'rating', 0) <= abs(rating)]
+        else:
+            return [r for r in recipes if getattr(r, 'rating', 0) >= rating]
 
 
 class Keyword(SetEnabledObjects):
