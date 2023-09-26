@@ -15,19 +15,15 @@ class SetEnabledObjects:
         return self.name
 
 
-class Ingredient(SetEnabledObjects):
-    def __init__(self, name, is_perishable, is_uncommon, is_bitter, is_common, opened_date=None):
-        self.id
-        self.name = name
-        self.is_perishable = is_perishable # list of ingredients
-        self.is_uncommon = is_uncommon # list of ingredients
-        self.is_bitter = is_bitter # list of ingredients
-        self.is_common = is_common # list of ingredients
-        self.is_smokey = is_smokey # list of ingredients
-        self.is_bitter = is_bitter # list of ingredients
-        self.is_herbal = is_herbal # list of ingredients
-        self.is_fruit = is_fruit # list of ingredients
-        self.is_flavored_syrup = is_flavored_syrup # list of ingredients
+class Food(SetEnabledObjects):
+    def __init__(self, food_json):
+        self.id = food_json['id']
+        self.name = food_json['name']
+        self.shopping = food_json['shopping']
+        self.recipe = food_json['recipe']
+        self.onhand = food_json['food_onhand']
+        self.ignore_shopping = food_json['ignore_shopping']
+        self.substitute_onhand = food_json['substitute_onhand']
 
 
 class Recipe(SetEnabledObjects):
@@ -45,8 +41,6 @@ class Recipe(SetEnabledObjects):
         self.rating = json_recipe['rating']
         self.ingredients = None  # List of Ingredient objects
 
-    def populate_food(self):
-        pass
 
     @staticmethod
     def recipesWithKeyword(recipes, keywords):

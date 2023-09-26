@@ -1,11 +1,9 @@
-
-
 import json
 
 import configargparse
 import yaml
 
-from models import Keyword, Recipe
+from models import Food, Keyword, Recipe
 from solver import RecipePicker
 from tandoor_api import TandoorAPI
 from utils import setup_logging, str2bool
@@ -13,6 +11,7 @@ from utils import setup_logging, str2bool
 
 class Menu:
 	recipe_picker = None
+
 	def __init__(self, options):
 		self.options = options
 		self.include_children = self.options.include_children
@@ -24,6 +23,9 @@ class Menu:
 		self.keyword_constraints = [json.loads(kw.replace("'", '"')) for kw in self.options.keywords]
 		for kc in self.keyword_constraints:
 			kc['count'] = int(kc['count'])
+		self.food_constraints = [json.loads(fd.replace("'", '"')) for fd in self.options.foods]
+		for fc in self.food_constraints:
+			fc['count'] = int(fc['count'])
 
 	def prepare_recipes(self):
 		for r in self.tandoor.get_recipes(params=self.options.recipes, filters=self.options.filters):
@@ -34,17 +36,44 @@ class Menu:
 		pass
 
 	def prepare_foods(self):
-		pass
+		for constraint in self.food_constraints:
+			if not isinstance(c := constraint['condition'], list):
+				constraint['condition'] = [c]
+			if not isinstance(c := constraint.get('except',[]), list):
+				constraint['except'] = [c]
+
+			food_list = []
+			for fd in constraint['condition']:
+				food_list.append(Food(self.tandoor.get_food(fd)))
+			constraint['condition'] = food_list
+
+			food_list = []
+			for fd in constraint.get('except', []):
+				food_list.append(Food(self.tandoor.get_food(fd)))
+			constraint['except'] = food_list
+
+			# recipe api doesn't include ingredients, so get a list of ingredients with the food
+			params = {
+				'foods_or': [f.id for f in constraint['condition']],
+				'foods_or_not': [f.id for f in constraint['except']]
+			}
+			recipes_with_food = []
+			for r in self.tandoor.get_recipes(params=params):
+				recipes_with_food.append(Recipe(r))
+			constraint['condition'] = recipes_with_food
 
 	def prepare_keywords(self):
+		# TODO add 'except' condition to list of keywords
 		for constraint in self.keyword_constraints:
 			if not isinstance(c := constraint['condition'], list):
 				constraint['condition'] = [c]
+			if not isinstance(c := constraint.get('except',[]), list):
+				constraint['except'] = [c]
 			if self.include_children:
 				kw_tree = []
 				for kw in constraint['condition']:
 					kw_tree += self.tandoor.get_keyword_tree(kw)
-				constraint['condition'] = list(set([Keyword(k) for k in kw_tree]))
+			constraint['condition'] = list(set([Keyword(k) for k in kw_tree]))
 
 	def prepare_data(self):
 		self.prepare_recipes()
@@ -57,9 +86,15 @@ class Menu:
 
 	def select_recipes(self):
 		self.recipe_picker = RecipePicker(self.recipes, self.choices, logger=self.logger)
+		# add keyword constraints
 		for c in self.keyword_constraints:
 			exclude = str2bool(c.get('exclude', False))
 			self.recipe_picker.add_keyword_constraint(c['condition'], c['count'], c['operator'], exclude)
+
+		# add food contstraints
+		for c in self.food_constraints:
+			exclude = str2bool(c.get('exclude', False))
+			self.recipe_picker.add_food_constraint(c['condition'], c['count'], c['operator'], exclude)
 		return self.recipe_picker.solve()
 
 
@@ -96,6 +131,9 @@ if __name__ == "__main__":
 	if menu.logger.level >= 10:
 		for r in recipes:
 			menu.logger.debug(f'Selected recipe {r} for the menu.')
+			kw_list = []
 			for kw in r.keywords:
-				menu.logger.debug(f'Selected recipe {recipes} contains keywords {kw}.')
+				kw_list.append(kw)
+			menu.logger.debug(f'Selected recipe {r} contains keywords {kw_list}.')
+			fd_list = []
 	pass

@@ -37,6 +37,16 @@ class TandoorAPI:
                 raise Exception(f"Failed to fetch recipes. Status code: {response.status_code}")
         return results
 
+    def get_single_result(self, url, obj_id):
+        url = f'{url}{obj_id}'
+        self.logger.debug(f'Connecting to tandoor api at url: {url}')
+        response = requests.get(url, headers=self.headers)
+
+        if response.status_code != 200:
+            self.logger.info(f"Failed to fetch recipes. Status code: {response.status_code}")
+            raise Exception(f"Failed to fetch recipes. Status code: {response.status_code}")
+        return json.loads(response.content)
+
     def get_recipes(self, params={}, filters=[]):
         """
         Fetch a list of recipes from the API.
@@ -95,7 +105,22 @@ class TandoorAPI:
         """
 
         url = f"{self.url}food/"
+        params['tree'] = food_id
+        params['page_size'] = 100
         foods = self.get_paged_results(url, params)
 
         self.logger.debug(f'Returning {len(foods)} total food.')
         return foods
+
+    def get_food(self, food_id, params={}):
+        """
+        Fetch a food and it's descendants from the API.
+        Returns:
+            list: A list of food objects in tandoor format.
+        """
+
+        url = f"{self.url}food/"
+        food = self.get_single_result(url, food_id)
+
+        self.logger.debug(f'Returning food {food["id"]}: {food["name"]}.')
+        return food
