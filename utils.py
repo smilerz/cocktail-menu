@@ -1,10 +1,23 @@
 import logging
+import shelve
 import sys
+from datetime import datetime, timedelta
+from functools import wraps
+from uuid import NAMESPACE_OID, uuid3
+
+try:
+	caches = shelve.open('caches.db', writeback=True)
+	for key in caches:
+		if caches[key]['expired'] < datetime.now():
+			caches.pop(key)
+except FileNotFoundError:
+	caches = {}
 
 
 class InfoFilter(logging.Filter):
 	def filter(self, rec):
 		return rec.levelno in (logging.DEBUG, logging.INFO)
+
 
 def relative_date(string):
     return string
@@ -72,3 +85,22 @@ def str2bool(v):
 		return v == 1
 	else:
 		return v.lower() in ("yes", "true", "1")
+
+
+def cached(ttl=240):
+	def decorator(func):
+		@wraps(func)
+		def wrapper(self, *args, **kwargs):
+			if not ttl or ttl <= 0:
+				return func(self, *args, **kwargs)
+			expire_after = timedelta(minutes=ttl)
+			# uuid's are consistent across runs, hash() is not
+			key = str(uuid3(NAMESPACE_OID, ''.join([str(x) for x in args]) + str(kwargs)))
+			if key not in caches or caches[key]['expired'] < datetime.now():
+				caches[key] = {'data': func(self, *args, **kwargs), 'expired': datetime.now() + expire_after}
+				caches.sync()
+
+			return caches[key]['data']
+
+		return wrapper
+	return decorator

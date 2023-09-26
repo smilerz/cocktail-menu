@@ -3,6 +3,7 @@
 # url : https://my.tandoor.server:8080/recipes/         # The full url of the Tandoor application including protocol, name, port and path
 # token : tda_xxxxxxxxxxxxxxxxxxxxxxxxxxxxx             # Tandoor API token.
 # log : DEBUG                                           # valid values are INFO (default) and DEBUG
+cache: 240                                              # Minutes to cache Tandoor API results; 0 to disable.
 
 ###  define which recipes to choose from.  If not defined, all recipes will be used.
 ### If both are provided or if multiple filters are provided, all results will be used.
@@ -22,7 +23,7 @@ choices : 5                                             # number of recipes to c
 ###
 # books : []  # condition = ID or list of IDs
 # foods : []  # condition = ID or list of IDs
-# keywords : [{"condition":[73, 273],"count":"1", "operator":">="},{"condition":47,"count":"2","operator":"=="}]
+# keywords : [{"condition":[73, 273],"count":"1", "operator":">="},{"condition":47,"count":"2","operator":"==", 'except':[99]},{"condition":1001,"count":"3","operator":"<=", 'exclude':1}]
 # ratings : []  # condition = number between 0 and 5
 # cookedon : []  # condition = date in YYYY-MM-DD format (use 'XXdays' for relative date XX days ago)
 # createdon : []  # condition = date in YYYY-MM-DD format (use 'XXdays' for relative date XX days ago)

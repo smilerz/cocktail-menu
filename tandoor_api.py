@@ -2,10 +2,14 @@ import json
 
 import requests
 
+from utils import cached
+
 
 class TandoorAPI:
+
     def __init__(self, url, token, logger, **kwargs):
         self.logger = logger
+        self.cached = cached(ttl=kwargs.get('cache', 240))
         self.token = token
         self.page_size = kwargs.get('page_size', 100)
         self.include_children = kwargs.get('include_children', True)
@@ -18,6 +22,7 @@ class TandoorAPI:
             'Authorization': f'Bearer {self.token}'
         }
 
+    @cached()
     def get_paged_results(self, url, params):
         results = []
         while url:
@@ -37,6 +42,7 @@ class TandoorAPI:
                 raise Exception(f"Failed to fetch recipes. Status code: {response.status_code}")
         return results
 
+    @cached()
     def get_single_result(self, url, obj_id):
         url = f'{url}{obj_id}'
         self.logger.debug(f'Connecting to tandoor api at url: {url}')
@@ -66,21 +72,22 @@ class TandoorAPI:
         self.logger.debug(f'Returning {len(recipes)} total recipes.')
         return recipes
 
-    def get_recipe_details(self, recipe_id):
-        """
-        Fetch details of a specific recipe by its ID.
-        Args:
-            recipe_id (str): The ID of the recipe to retrieve.
-        Returns:
-            dict: Details of the recipe in JSON-LD format.
-        """
-        url = f"{self.base_url}/recipes/{recipe_id}"
-        response = requests.get(url)
+    # @cached
+    # def get_recipe_details(self, recipe_id):
+    #     """
+    #     Fetch details of a specific recipe by its ID.
+    #     Args:
+    #         recipe_id (str): The ID of the recipe to retrieve.
+    #     Returns:
+    #         dict: Details of the recipe in JSON-LD format.
+    #     """
+    #     url = f"{self.base_url}/recipes/{recipe_id}"
+    #     response = requests.get(url)
 
-        if response.status_code == 200:
-            return response.json()
-        else:
-            raise Exception(f"Failed to fetch recipe details. Status code: {response.status_code}")
+    #     if response.status_code == 200:
+    #         return response.json()
+    #     else:
+    #         raise Exception(f"Failed to fetch recipe details. Status code: {response.status_code}")
 
     def get_keyword_tree(self, kw_id, params={}):
         """

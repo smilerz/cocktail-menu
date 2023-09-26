@@ -16,7 +16,7 @@ class Menu:
 		self.options = options
 		self.include_children = self.options.include_children
 		self.logger = setup_logging(log=self.options.log)
-		self.tandoor = TandoorAPI(self.options.url, self.options.token, self.logger)
+		self.tandoor = TandoorAPI(self.options.url, self.options.token, self.logger, cache=int(self.options.cache))
 		self.choices = int(self.options.choices)
 		self.recipes = []
 
@@ -105,6 +105,7 @@ def parse_args():
 		description='Create a custom menu from recipes in Tandoor with defined criteria.'
 	)
 	parser.add_argument('--log', default='info', help='Sets the logging level')
+	parser.add_argument('--cache', default='240', help='Minutes to cache Tandoor API results; 0 to disable.')
 	parser.add_argument('--url', type=str, required=True, help='The full url of the Tandoor server, including protocol, name, port and path')
 	parser.add_argument('--token', type=str, required=True, help='Tandoor API token.')
 	parser.add_argument('--recipes', type=yaml.safe_load, help='recipes to choose from; search parameters, see /docs/api/ for full list of parameters')
