@@ -217,5 +217,7 @@ if __name__ == "__main__":
 			for kw in r.keywords:
 				kw_list.append(kw)
 			menu.logger.debug(f'Selected recipe {r} contains keywords {kw_list}.')
-			fd_list = []
-	pass
+
+	print('\n\n###########################\nYour selected recipes are:')
+	for r in recipes:
+		print(f'Recipe: {r.id} {r.name}: {menu.tandoor.url.replace("/api/","/view/recipe/")}{r.id}')
