@@ -64,8 +64,10 @@ class TandoorAPI:
         if params:
             params['include_children'] = self.include_children
             params['page_size'] = self.page_size
-            # params={'filter':id}
             recipes = self.get_paged_results(url, params)
+
+        if not isinstance(filters, list):
+            filters = [filters]
         for f in filters:
             recipes += self.get_paged_results(url, {'page_size': self.page_size, 'filter': f})
 
@@ -131,3 +133,32 @@ class TandoorAPI:
 
         self.logger.debug(f'Returning food {food["id"]}: {food["name"]}.')
         return food
+
+    def get_book(self, book_id, params={}):
+        """
+        Fetch a book from the API.
+        Returns:
+            obj: A book object in tandoor format.
+        """
+
+        url = f"{self.url}recipe-book/"
+        book = self.get_single_result(url, book_id)
+
+        self.logger.debug(f'Returning book {book["id"]}: {book["name"]}.')
+        return book
+
+    def get_book_recipes(self, book, params={}):
+        """
+        Fetch all recipes in a book from the API.
+        Returns:
+            list: List of book contents.
+        """
+
+        url = f"{self.url}recipe-book-entry/?book={book.id}"
+        book_entries = self.get_single_result(url, '')
+        recipes = [be['recipe_content'] for be in book_entries]
+        if book.filter:
+            recipes += self.get_recipes(filters=book.filter)
+
+        self.logger.debug(f'Returning book {book.id}: {book.name} with {len(recipes)} recipes.')
+        return recipes

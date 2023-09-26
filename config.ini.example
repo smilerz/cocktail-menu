@@ -20,6 +20,8 @@ cache: 240                                              # Minutes to cache Tando
 
 choices : 5                                             # number of recipes to choose
 ### conditions are all list of dicts of the format {condition:xx, count:yy, operator: [>= or <= or ==]}
+### exclude (bool) means all recipes excluding listed keys
+### except (id), excludes an id from a tree (protein includes all proteins adding except:chicken includes all proteins except chicken)
 ###
 # book : []  # condition = ID or list of IDs
 # food : []  # condition = ID or list of IDs

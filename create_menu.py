@@ -3,7 +3,7 @@ import json
 import configargparse
 import yaml
 
-from models import Food, Keyword, Recipe
+from models import Book, Food, Keyword, Recipe
 from solver import RecipePicker
 from tandoor_api import TandoorAPI
 from utils import format_date, setup_logging, str2bool
@@ -46,7 +46,33 @@ class Menu:
 		self.recipes = list(set(menu.recipes))
 
 	def prepare_books(self):
-		pass
+		for constraint in self.book_constraints:
+			if not isinstance(c := constraint['condition'], list):
+				constraint['condition'] = [c]
+			if not isinstance(c := constraint.get('except', []), list):
+				constraint['except'] = [c]
+
+			book_list = []
+			for bk in constraint['condition']:
+				book_list.append(Book(self.tandoor.get_book(bk)))
+			constraint['condition'] = book_list
+
+			book_list = []
+			for bk in constraint.get('except', []):
+				book_list.append(Book(self.tandoor.get_book(bk)))
+			constraint['except'] = book_list
+
+			found_recipes = []
+			for bk in constraint['condition']:
+				for r in self.tandoor.get_book_recipes(bk):
+					found_recipes.append(Recipe(r))
+
+			if cooked := constraint.get('cooked', None):
+				found_recipes = Recipe.recipesWithDate(found_recipes, 'cookedon', cooked, constraint.get('cooked_after', False))
+			if created := constraint.get('created', None):
+				found_recipes = Recipe.recipesWithDate(found_recipes, 'createdon', created, constraint.get('created_after', False))
+			# TODO I don't like overwriting the condition with the results of that condition
+			constraint['condition'] = found_recipes
 
 	def prepare_foods(self):
 		for constraint in self.food_constraints:
@@ -77,6 +103,7 @@ class Menu:
 				found_recipes = Recipe.recipesWithDate(found_recipes, 'cookedon', cooked, constraint.get('cooked_after', False))
 			if created := constraint.get('created', None):
 				found_recipes = Recipe.recipesWithDate(found_recipes, 'createdon', created, constraint.get('created_after', False))
+			# TODO I don't like overwriting the condition with the results of that condition
 			constraint['condition'] = found_recipes
 
 	def prepare_keywords(self):
@@ -96,7 +123,7 @@ class Menu:
 		self.prepare_recipes()
 		self.prepare_keywords()
 		self.prepare_foods()
-		# self.prepare_books()
+		self.prepare_books()
 
 	def select_recipes(self):
 		self.recipe_picker = RecipePicker(self.recipes, self.choices, logger=self.logger)
@@ -115,6 +142,11 @@ class Menu:
 			exclude = str2bool(c.get('exclude', False))
 			self.recipe_picker.add_food_constraint(c['condition'], c['count'], c['operator'], exclude=exclude)
 
+		# add book constraints
+		for c in self.book_constraints:
+			exclude = str2bool(c.get('exclude', False))
+			self.recipe_picker.add_book_constraint(c['condition'], c['count'], c['operator'], exclude=exclude)
+
 		# add rating contraints
 		for c in self.rating_constraints:
 			exclude = str2bool(c.get('exclude', False))
@@ -124,6 +156,25 @@ class Menu:
 			if created := c.get('created', None):
 				found_recipes = Recipe.recipesWithDate(found_recipes, 'createdon', created, after=c.get('created_after', False))
 			self.recipe_picker.add_rating_constraints(Recipe.recipesWithRating(found_recipes, c.get('condition')), c['count'], c['operator'], exclude=exclude)
+
+		# add cookedon constraints
+		for c in self.cookedon_constraints:
+			exclude = str2bool(c.get('exclude', False))
+			d, a = format_date(c['condition'])
+			found_recipes = Recipe.recipesWithDate(self.recipes, 'cookedon', d, after=a)
+			if created := c.get('created', None):
+				found_recipes = Recipe.recipesWithDate(found_recipes, 'createdon', created, after=c.get('created_after', False))
+			self.recipe_picker.add_cookedon_constraints(found_recipes, c['count'], c['operator'], exclude=exclude)
+
+		# add createdon constraints
+		for c in self.createdon_constraints:
+			exclude = str2bool(c.get('exclude', False))
+			d, a = format_date(c['condition'])
+			found_recipes = Recipe.recipesWithDate(self.recipes, 'createdon', d, after=a)
+			if cookedon := c.get('cookedon', None):
+				found_recipes = Recipe.recipesWithDate(found_recipes, 'cookedon', cookedon, after=c.get('cookedon_after', False))
+			self.recipe_picker.add_createdon_constraints(found_recipes, c['count'], c['operator'], exclude=exclude)
+
 		return self.recipe_picker.solve()
 
 

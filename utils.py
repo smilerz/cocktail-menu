@@ -21,12 +21,14 @@ class InfoFilter(logging.Filter):
 
 
 def format_date(string):
-	if validate_date_string(string):
-		return string
-	lessthan, offset, interval = split_offset(string)
+	date, after = string_to_date(string)
+	if date:
+		return date, after
+
+	after, offset, interval = split_offset(string)
 	# TODO support more time intervals that days
 	offset = timedelta(days=offset)
-	return datetime.now(timezone.utc) - offset, lessthan
+	return datetime.now(timezone.utc) - offset, after
 
 
 def setup_logging(log='INFO'):
@@ -111,16 +113,18 @@ def cached(ttl=240):
 		return wrapper
 	return decorator
 
-
-def validate_date_string(date_str):
+def string_to_date(date_str):
 	# Define the regex pattern
 	pattern = r'^-?\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$'
 
 	# Use re.match to check if the string matches the pattern
 	if re.match(pattern, date_str):
-		return True
+		if date_str[:1] == '-':
+			return datetime.strptime(date_str[1:], '%Y-%m-%d').replace(tzinfo=timezone.utc), False
+		else:
+			return datetime.strptime(date_str[1:], '%Y-%m-%d').replace(tzinfo=timezone.utc), True
 	else:
-		return False
+		return False, False
 
 
 def split_offset(s):
@@ -132,10 +136,10 @@ def split_offset(s):
 
 	if match:
 		# Extract and assign values to variables
-		lessthan = match.group(1) == '-'
+		after = not match.group(1) == '-'
 		offset = int(match.group(2))
 		interval = match.group(3).lower()  # Convert to lowercase for case-insensitivity
-		return lessthan, offset, interval
+		return after, offset, interval
 
 	else:
 		# Return None or raise an exception for invalid input

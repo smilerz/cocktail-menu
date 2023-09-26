@@ -69,7 +69,7 @@ class Recipe(SetEnabledObjects):
             return [r for r in recipes if (d := getattr(r, field, None)) is not None and d > date]
 
         else:
-            return [r for r in recipes if (d := getattr(r, field, None) is not None) and d < date]
+            return [r for r in recipes if (d := getattr(r, field, None)) is not None and d < date]
 
     @staticmethod
     def recipesWithRating(recipes, rating):
@@ -83,7 +83,7 @@ class Recipe(SetEnabledObjects):
         '''
         lessthan = rating < 0
         if lessthan:
-            return [r for r in recipes if getattr(r, 'rating', 0) <= abs(rating)]
+            return [r for r in recipes if 0 < getattr(r, 'rating', None) <= abs(rating)]
         else:
             return [r for r in recipes if getattr(r, 'rating', 0) >= rating]
 
@@ -92,3 +92,13 @@ class Keyword(SetEnabledObjects):
     def __init__(self, json_kw):
         self.id = json_kw['id']
         self.name = json_kw['name']
+
+
+class Book(SetEnabledObjects):
+    def __init__(self, json_bk):
+        self.id = json_bk['id']
+        self.name = json_bk['name']
+        if f := json_bk.get('filter', None):
+            self.filter = f.get('id', None)
+        else:
+            self.filter = None
