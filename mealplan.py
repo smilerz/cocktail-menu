@@ -9,7 +9,7 @@ class MealPlanManager:
 
     def cleanup_uncooked(self, date, mp_type):
         # get all plans of meal type
-        plans = [mp for mp in self.api.get_meal_plans(date, cache=False) if mp['meal_type']['id'] == mp_type]
+        plans = [mp for mp in self.api.get_meal_plans(date, ttl=False) if mp['meal_type']['id'] == mp_type]
         # get all recipes cooked since cleanup date
         cooked_recipes = self.api.get_recipes(params={'cookedon': date.strftime('%Y-%m-%d')}, cache=False)
         # for each plan containing a recipe not cooked since cleanup date - delete the plan

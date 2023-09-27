@@ -6,6 +6,8 @@ from datetime import datetime, timedelta, timezone
 from functools import wraps
 from uuid import NAMESPACE_OID, uuid3
 
+from tqdm import tqdm
+
 try:
 	caches = shelve.open('caches.db', writeback=True)
 	for key in caches:
@@ -18,6 +20,20 @@ except FileNotFoundError:
 class InfoFilter(logging.Filter):
 	def filter(self, rec):
 		return rec.levelno in (logging.DEBUG, logging.INFO)
+
+
+class TQDM(tqdm):
+	def __init__(self, *args, **kwargs):
+		super().__init__(*args, **kwargs)
+		self.step = 0
+
+	def update_step(self, step=1):
+		self.step += step
+		self.update(step)
+
+	def reset_step(self):
+		self.step = 0
+		self.n = 0
 
 
 def format_date(string, future=False):
@@ -98,23 +114,27 @@ def str2bool(v):
 		return v.lower() in ("yes", "true", "1")
 
 
-def cached(ttl=240):
-	def decorator(func):
-		@wraps(func)
-		def wrapper(self, *args, **kwargs):
-			if not ttl or ttl <= 0 or not kwargs.get('cache', True):
-				return func(self, *args, **kwargs)
-			expire_after = timedelta(minutes=ttl)
-			# uuid's are consistent across runs, hash() is not
-			key = str(uuid3(NAMESPACE_OID, ''.join([str(x) for x in args]) + str(kwargs)))
-			if key not in caches or caches[key]['expired'] < datetime.now():
-				caches[key] = {'data': func(self, *args, **kwargs), 'expired': datetime.now() + expire_after}
-				caches.sync()
+def cached(func):
+	@wraps(func)
+	def wrapper(self, *args, **kwargs):
+		try:
+			ttl = self.ttl
+		except NameError:
+			try:
+				ttl = ttl
+			except NameError:
+				ttl = 240
+		if not ttl or ttl <= 0:
+			return func(self, *args, **kwargs)
+		expire_after = timedelta(minutes=ttl)
+		# uuid's are consistent across runs, hash() is not
+		key = str(uuid3(NAMESPACE_OID, ''.join([str(x) for x in args]) + str(kwargs)))
+		if key not in caches or caches[key]['expired'] < datetime.now():
+			caches[key] = {'data': func(self, *args, **kwargs), 'expired': datetime.now() + expire_after}
+			caches.sync()
 
-			return caches[key]['data']
-
-		return wrapper
-	return decorator
+		return caches[key]['data']
+	return wrapper
 
 
 def string_to_date(date_str):
@@ -152,3 +172,20 @@ def split_offset(s):
 
 def get_log_level(log):
 	return log
+
+
+def display_progress(func):
+	@wraps(func)
+	def wrapper(self, *args, **kwargs):
+		result = func(self, *args, **kwargs)
+		try:
+			progress = self.progress or None
+		except NameError:
+			try:
+				progress = progress or None
+			except NameError:
+				progress = None
+		if progress:
+			progress.update_step()  # Increment progress by 1 step after each function call
+		return result
+	return wrapper

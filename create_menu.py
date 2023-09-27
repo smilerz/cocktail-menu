@@ -258,3 +258,5 @@ if __name__ == "__main__":
 		if args.cleanup_mp:
 			mpm.cleanup_uncooked(date=args.cleanup_date, mp_type=args.mp_type)
 		mpm.create_from_recipes(recipes, args.mp_type, date=args.mp_date, note=args.mp_note)
+		menu.tandoor.progress.update_step(step=100-menu.tandoor.progress.last_print_n)
+		menu.tandoor.progress.close()

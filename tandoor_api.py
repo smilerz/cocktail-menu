@@ -2,14 +2,17 @@ import json
 
 import requests
 
-from utils import cached
+from utils import TQDM, cached, display_progress
 
 
 class TandoorAPI:
+    progress = None
 
     def __init__(self, url, token, logger, **kwargs):
         self.logger = logger
-        self.cached = cached(ttl=kwargs.get('cache', 240))
+        if self.logger.loglevel != 10:
+            self.progress = TQDM(total=100)
+        self.ttl = kwargs.get('cache', 240)
         self.token = token
         self.page_size = kwargs.get('page_size', 100)
         self.include_children = kwargs.get('include_children', True)
@@ -22,7 +25,8 @@ class TandoorAPI:
             'Authorization': f'Bearer {self.token}'
         }
 
-    @cached()
+    @display_progress
+    @cached
     def get_paged_results(self, url, params, **kwargs):
         results = []
         while url:
@@ -42,7 +46,8 @@ class TandoorAPI:
                 raise Exception(f"Failed to fetch recipes. Status code: {response.status_code}: {response.text}")
         return results
 
-    @cached()
+    @display_progress
+    @cached
     def get_unpaged_results(self, url, obj_id, **kwargs):
         url = f'{url}{obj_id}'
         self.logger.debug(f'Connecting to tandoor api at url: {url}')
@@ -92,6 +97,7 @@ class TandoorAPI:
         self.logger.debug(f'Returning {len(recipes)} total recipes.')
         return recipes
 
+    # @display_progress
     # @cached
     # def get_recipe_details(self, recipe_id):
     #     """
