@@ -1,6 +1,7 @@
 import random
 
 from pulp import LpMaximize, LpProblem, LpVariable, lpSum, value
+from pulp.apis import PULP_CBC_CMD
 
 
 class RecipePicker:
@@ -133,7 +134,8 @@ class RecipePicker:
 
     def solve(self):
         self.logger.debug(f'Solving to choose {self.numrecipes} with {self.numcriteria} unique criteria.')
-        self.solver.solve()
+        debug = self.logger.loglevel == 10
+        self.solver.solve(PULP_CBC_CMD(msg=debug))
         if self.solver.status != 1:
             self.logger.info('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
             self.logger.info('No solution found, adjustment of criteria required.')

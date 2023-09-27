@@ -85,6 +85,7 @@ def setup_logging(log='INFO'):
 	else:
 		ch_std.setLevel(level)
 		logger.addHandler(ch_std)
+		logger.loglevel = level
 	return logger
 
 
@@ -147,3 +148,7 @@ def split_offset(s):
 	else:
 		# Return None or raise an exception for invalid input
 		raise ValueError(f"Invalid time offset format: {s}.  Value must be in form of '-XXdays'")
+
+
+def get_log_level(log):
+	return log

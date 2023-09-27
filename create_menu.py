@@ -239,7 +239,7 @@ if __name__ == "__main__":
 	recipes = menu.select_recipes()
 
 	menu.logger.info(f'Selected {len(recipes)} recipes for the menu.')
-	if menu.logger.level >= 10:
+	if menu.logger.loglevel == 10:
 		for r in recipes:
 			date_cooked = (x := getattr(r, 'cookedon', None)) and x.strftime("%Y-%m-%d") or "Never"
 			menu.logger.debug(f'Selected recipe {r} for the menu with rating {r.rating}. Created on: {r.createdon.strftime("%Y-%m-%d")} and last cooked {date_cooked}')
@@ -250,8 +250,9 @@ if __name__ == "__main__":
 
 	print('\n\n###########################\nYour selected recipes are:')
 	for r in recipes:
-		print(f'Recipe: {r.id} {r.name}: {menu.tandoor.url.replace("/api/","/view/recipe/")}{r.id}')
+		print(f'Recipe: <{r.id}> {r.name}: {menu.tandoor.url.replace("/api/","/view/recipe/")}{r.id}')
 
+	print('###########################\n')
 	if args.create_mp:
 		mpm = MealPlanManager(menu.tandoor, menu.logger)
 		if args.cleanup_mp:

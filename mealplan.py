@@ -13,7 +13,9 @@ class MealPlanManager:
         # get all recipes cooked since cleanup date
         cooked_recipes = self.api.get_recipes(params={'cookedon': date.strftime('%Y-%m-%d')}, cache=False)
         # for each plan containing a recipe not cooked since cleanup date - delete the plan
-        for plan in [p for p in plans if p['recipe']['id'] not in [y['id'] for y in cooked_recipes]]:
+        plans_to_delete = [p for p in plans if p['recipe']['id'] not in [y['id'] for y in cooked_recipes]]
+        self.logger.info(f'Deleting {len(plans_to_delete)} meal plans that were not cooked.')
+        for plan in plans_to_delete:
             self.api.delete_meal_plan(plan['id'])
 
     def create(self, recipe, type, date, note):
