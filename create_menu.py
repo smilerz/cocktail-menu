@@ -223,14 +223,8 @@ def validate_args(args):
 		except (ValueError, TypeError):
 			valid = False
 			raise RuntimeError('"mp_type" must be a valid Meal Type ID.')
-		if args.mp_date[:1] == '-':
-			print(f'Creating meal plans in the past not supported.  Changing meal plan date from {args.mp_date} to {args.mp_date[1:]}.')
-			args.mp_date = args.mp_date[1:]
-		args.mp_date, _ = format_date(args.mp_date)
+		args.mp_date, _ = format_date(args.mp_date, future=True)
 		if args.cleanup_mp:
-			if args.cleanup_date[:1] != '-':
-				print(f'Cleaning up meal plans in the future not supported.  Changing cleanup date from {args.cleanup_date} to -{args.cleanup_date}.')
-				args.cleanup_date = '-' + args.cleanup_date
 			args.cleanup_date, _ = format_date(args.cleanup_date)
 			print(f'Uncooked meal plans will be cleaned up beginning on {args.cleanup_date.strftime("%Y-%m-%d")} with meal type {args.mp_type}.')
 		print(f'Meal plan creation enabled.  Recipes will be added on {args.mp_date.strftime("%Y-%m-%d")} with meal type {args.mp_type}.')

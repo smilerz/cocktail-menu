@@ -20,7 +20,7 @@ class InfoFilter(logging.Filter):
 		return rec.levelno in (logging.DEBUG, logging.INFO)
 
 
-def format_date(string):
+def format_date(string, future=False):
 	date, after = string_to_date(string)
 	if date:
 		return date, after
@@ -28,6 +28,8 @@ def format_date(string):
 	after, offset, interval = split_offset(string)
 	# TODO support more time intervals that days
 	offset = timedelta(days=offset)
+	if future:
+		return datetime.now(timezone.utc) + offset, after
 	return datetime.now(timezone.utc) - offset, after
 
 

@@ -11,11 +11,12 @@ class MealPlanManager:
         pass
 
     def create(self, recipe, type, date, note):
+        self.logger.debug(f'Attempting to create mealplan of type {type} for recipe {recipe.name} on {date.strftime("%Y-%m-%d")}')
         self.api.create_meal_plan(
-            title = recipe.name,
-            recipe = recipe,
-            servings = recipe.servings,
-            type = type,
-            note = note,
-            date = date
+            title=recipe.name,
+            recipe=recipe,
+            servings=recipe.servings,
+            type=type,
+            note=note,
+            date=date
         )
