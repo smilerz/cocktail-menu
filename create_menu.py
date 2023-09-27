@@ -258,8 +258,8 @@ if __name__ == "__main__":
 	for r in recipes:
 		print(f'Recipe: {r.id} {r.name}: {menu.tandoor.url.replace("/api/","/view/recipe/")}{r.id}')
 
-	if args.mp_create:
+	if args.create_mp:
 		mpm = MealPlanManager(menu.tandoor, menu.logger)
-		if args.mp_cleanup:
-			mpm.cleanup_uncooked()
-		mpm.mealplanFromRecipes(recipes, args.mp_type, date=args.mp_date, note=args.mp_note)
+		if args.cleanup_mp:
+			mpm.cleanup_uncooked(date=args.cleanup_date, type=args.mp_type)
+		mpm.create_from_recipes(recipes, args.mp_type, date=args.mp_date, note=args.mp_note)

@@ -53,6 +53,16 @@ class TandoorAPI:
             raise Exception(f"Failed to fetch recipes. Status code: {response.status_code}")
         return json.loads(response.content)
 
+    def create_object(self, url, data):
+        self.logger.debug(f'Create object with tandoor api at url: {url}')
+        response = requests.post(url, headers=self.headers, json=data)
+
+        if response.status_code == 201:
+            return response.json()
+        else:
+            self.logger.info(f'Error creating object: {response.text}')
+            raise RuntimeError(f'Error creating object: {response.text}')
+
     def get_recipes(self, params={}, filters=[]):
         """
         Fetch a list of recipes from the API.
@@ -163,18 +173,26 @@ class TandoorAPI:
         self.logger.debug(f'Returning book {book.id}: {book.name} with {len(recipes)} recipes.')
         return recipes
 
-    def create_meal_plan(self, recipes, type_id, date, note):
-        """
-        Create meal plans on DATE baesd on recipes
-        Returns:
-            Success or Failure
-        """
-        f"{self.url}recipe-book/"
-        self.logger.debug(f'Connecting to tandoor api at url: {url}')
-        response = requests.get(url, headers=self.headers)
+    def create_meal_plan(self, recipe=None, title=None, servings=1, date=None, note=None, type=None):
+        url = f"{self.url}meal-plan/"
+        plan = self.create_object(
+            url,
+            {
+                'title': title,
+                'recipe': {
+                    'id': recipe.id,
+                    'name': recipe.name,
+                    'keywords': []
+                },
+                'servings': servings,
+                'note': note,
+                'from_date': date.strftime('%Y-%m-%d'),
+                'to_date': date.strftime('%Y-%m-%d'),
+                'meal_type': self.get_single_result(f'{self.url}meal-type/', type)
+            }
+        )
 
-        if response.status_code != 200:
-            self.logger.info(f"Failed to fetch recipes. Status code: {response.status_code}")
-            raise Exception(f"Failed to fetch recipes. Status code: {response.status_code}")
-        return json.loads(response.content)
+        self.logger.debug(f'Succesfully created meal plan {plan["id"]}: {title} with type {type}')
+
+        return plan
 
