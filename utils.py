@@ -113,6 +113,7 @@ def cached(ttl=240):
 		return wrapper
 	return decorator
 
+
 def string_to_date(date_str):
 	# Define the regex pattern
 	pattern = r'^-?\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$'

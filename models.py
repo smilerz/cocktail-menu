@@ -32,6 +32,7 @@ class Recipe(SetEnabledObjects):
         self.name = json_recipe['name']
         self.description = json_recipe['description']
         self.new = json_recipe['new']
+        self.servings = json_recipe['servings']
         self.keywords = [kw['id'] for kw in json_recipe['keywords']]
         try:
             self.cookedon = datetime.fromisoformat(json_recipe['last_cooked'])

@@ -1,5 +1,5 @@
 [create-menu]
-# Use this config.ini file or set using command line switches
+# Use this config.ini file or set using command line switches.  Command line switches will override settings in this file
 # url : https://my.tandoor.server:8080/recipes/         # The full url of the Tandoor application including protocol, name, port and path
 # token : tda_xxxxxxxxxxxxxxxxxxxxxxxxxxxxx             # Tandoor API token.
 # log : DEBUG                                           # valid values are INFO (default) and DEBUG
@@ -29,3 +29,12 @@ choices : 5                                             # number of recipes to c
 # rating : [{"condition":3.1,"count":"1", "operator":"=="}]  # Condtion = number between -5 and 5.  Negative value implies lessthan comparison.
 # cookedon : []  # condition = date in YYYY-MM-DD format (use 'XXdays' for relative date XX days ago)
 # createdon : []  # condition = date in YYYY-MM-DD format (use 'XXdays' for relative date XX days ago)
+
+[mealplan]
+# configuration for automatically creating meal plan based on chosen recipes
+# create_mp : false                                 # Add mealplans for chosen recipes
+# mp_date : 0days                                   # (required) date to create mealplan in YYYY-MM-DD format or XXdays
+# mp_type :                                         # (required) id of meal play type; seperate mealplan types are strongly encouraged
+# mp_note : Created by: Tandoor Menu Generator
+# cleanup_mp : False                                # Delete uncooked mealplans at next execution
+# cleanup_date : -7days                              # Starting date to cleanup uncooked mealplans in YYYY-MM-DD format or -XXdays

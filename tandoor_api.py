@@ -162,3 +162,19 @@ class TandoorAPI:
 
         self.logger.debug(f'Returning book {book.id}: {book.name} with {len(recipes)} recipes.')
         return recipes
+
+    def create_meal_plan(self, recipes, type_id, date, note):
+        """
+        Create meal plans on DATE baesd on recipes
+        Returns:
+            Success or Failure
+        """
+        f"{self.url}recipe-book/"
+        self.logger.debug(f'Connecting to tandoor api at url: {url}')
+        response = requests.get(url, headers=self.headers)
+
+        if response.status_code != 200:
+            self.logger.info(f"Failed to fetch recipes. Status code: {response.status_code}")
+            raise Exception(f"Failed to fetch recipes. Status code: {response.status_code}")
+        return json.loads(response.content)
+

@@ -3,6 +3,7 @@ import json
 import configargparse
 import yaml
 
+from mealplan import MealPlanManager
 from models import Book, Food, Keyword, Recipe
 from solver import RecipePicker
 from tandoor_api import TandoorAPI
@@ -184,10 +185,12 @@ def parse_args():
 		default_config_files=['./config.ini'],
 		description='Create a custom menu from recipes in Tandoor with defined criteria.'
 	)
+	# application related switches
 	parser.add_argument('--log', default='info', help='Sets the logging level')
 	parser.add_argument('--cache', default='240', help='Minutes to cache Tandoor API results; 0 to disable.')
 	parser.add_argument('--url', type=str, required=True, help='The full url of the Tandoor server, including protocol, name, port and path')
 	parser.add_argument('--token', type=str, required=True, help='Tandoor API token.')
+	# solver related switches
 	parser.add_argument('--recipes', type=yaml.safe_load, help='recipes to choose from; search parameters, see /docs/api/ for full list of parameters')
 	parser.add_argument('--filters', nargs='*', default=[], help='Array of CustomFilter IDs')
 	parser.add_argument('--choices', default=5, help='Number of recipes to choose')
@@ -198,12 +201,45 @@ def parse_args():
 	parser.add_argument('--cookedon', nargs='*', default=[], help="condition = date in YYYY-MM-DD format (use 'XXdays' for relative date XX days ago)")
 	parser.add_argument('--createdon', nargs='*', default=[], help="condition = date in YYYY-MM-DD format (use 'XXdays' for relative date XX days ago)")
 	parser.add_argument('--include_children', action='store_true', default=True, help='For keywords and foods, child objects also satisfy the condition.')
+	# mealplan related switches
+	parser.add_argument('--create_mp', action='store_true', default=True, help='Add mealplans for chosen recipes.')
+	parser.add_argument('--mp_date', type=str, default='0days', help='Date to create mealplan in YYYY-MM-DD format or XXdays.')
+	parser.add_argument('--mp_type', help='ID of meal play type; seperate mealplan types are strongly encouraged.')
+	parser.add_argument('--mp_note', type=str, default='Created by: Tandoor Menu Generator.')
+	parser.add_argument('--cleanup_mp', action='store_true', default=False, help='Delete uncooked mealplans at next execution.')
+	parser.add_argument('--cleanup_date', type=str, default='-7days', help='Starting date to cleanup uncooked mealplans in YYYY-MM-DD format or -XXdays.')
 
 	return parser.parse_args()
 
 
+def validate_args(args):
+	valid = True
+	if args.create_mp:
+		if not bool(args.mp_date) & bool(args.mp_type):
+			valid = False
+			raise RuntimeError('When "create_mp" is enabled, both "mp_date" and "mp_type" must be provided.')
+		try:
+			args.mp_type = int(args.mp_type)
+		except (ValueError, TypeError):
+			valid = False
+			raise RuntimeError('"mp_type" must be a valid Meal Type ID.')
+		if args.mp_date[:1] == '-':
+			print(f'Creating meal plans in the past not supported.  Changing meal plan date from {args.mp_date} to {args.mp_date[1:]}.')
+			args.mp_date = args.mp_date[1:]
+		args.mp_date, _ = format_date(args.mp_date)
+		if args.cleanup_mp:
+			if args.cleanup_date[:1] != '-':
+				print(f'Cleaning up meal plans in the future not supported.  Changing cleanup date from {args.cleanup_date} to -{args.cleanup_date}.')
+				args.cleanup_date = '-' + args.cleanup_date
+			args.cleanup_date, _ = format_date(args.cleanup_date)
+			print(f'Uncooked meal plans will be cleaned up beginning on {args.cleanup_date.strftime("%Y-%m-%d")} with meal type {args.mp_type}.')
+		print(f'Meal plan creation enabled.  Recipes will be added on {args.mp_date.strftime("%Y-%m-%d")} with meal type {args.mp_type}.')
+	return valid
+
+
 if __name__ == "__main__":
 	args = parse_args()
+	validate_args(args)
 	menu = Menu(args)
 	menu.prepare_data()
 	recipes = menu.select_recipes()
@@ -221,3 +257,9 @@ if __name__ == "__main__":
 	print('\n\n###########################\nYour selected recipes are:')
 	for r in recipes:
 		print(f'Recipe: {r.id} {r.name}: {menu.tandoor.url.replace("/api/","/view/recipe/")}{r.id}')
+
+	if args.mp_create:
+		mpm = MealPlanManager(menu.tandoor, menu.logger)
+		if args.mp_cleanup:
+			mpm.cleanup_uncooked()
+		mpm.mealplanFromRecipes(recipes, args.mp_type, date=args.mp_date, note=args.mp_note)
