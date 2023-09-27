@@ -7,8 +7,14 @@ class MealPlanManager:
         for r in recipes:
             self.create(r, mp_type, date, note)
 
-    def cleanup_uncooked(self, date, type):
-        pass
+    def cleanup_uncooked(self, date, mp_type):
+        # get all plans of meal type
+        plans = [mp for mp in self.api.get_meal_plans(date, cache=False) if mp['meal_type']['id'] == mp_type]
+        # get all recipes cooked since cleanup date
+        cooked_recipes = self.api.get_recipes(params={'cookedon': date.strftime('%Y-%m-%d')}, cache=False)
+        # for each plan containing a recipe not cooked since cleanup date - delete the plan
+        for plan in [p for p in plans if p['recipe']['id'] not in [y['id'] for y in cooked_recipes]]:
+            self.api.delete_meal_plan(plan['id'])
 
     def create(self, recipe, type, date, note):
         self.logger.debug(f'Attempting to create mealplan of type {type} for recipe {recipe.name} on {date.strftime("%Y-%m-%d")}')

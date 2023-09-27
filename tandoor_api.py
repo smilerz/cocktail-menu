@@ -23,7 +23,7 @@ class TandoorAPI:
         }
 
     @cached()
-    def get_paged_results(self, url, params):
+    def get_paged_results(self, url, params, **kwargs):
         results = []
         while url:
             self.logger.debug(f'Connecting to tandoor api at url: {url}')
@@ -38,22 +38,22 @@ class TandoorAPI:
             url = content.get('next', None)
 
             if response.status_code != 200:
-                self.logger.info(f"Failed to fetch recipes. Status code: {response.status_code}")
-                raise Exception(f"Failed to fetch recipes. Status code: {response.status_code}")
+                self.logger.info(f"Failed to fetch recipes. Status code: {response.status_code}: {response.text}")
+                raise Exception(f"Failed to fetch recipes. Status code: {response.status_code}: {response.text}")
         return results
 
     @cached()
-    def get_single_result(self, url, obj_id):
+    def get_unpaged_results(self, url, obj_id, **kwargs):
         url = f'{url}{obj_id}'
         self.logger.debug(f'Connecting to tandoor api at url: {url}')
         response = requests.get(url, headers=self.headers)
 
         if response.status_code != 200:
-            self.logger.info(f"Failed to fetch recipes. Status code: {response.status_code}")
-            raise Exception(f"Failed to fetch recipes. Status code: {response.status_code}")
+            self.logger.info(f"Failed to fetch recipes. Status code: {response.status_code}: {response.text}")
+            raise Exception(f"Failed to fetch recipes. Status code: {response.status_code}: {response.text}")
         return json.loads(response.content)
 
-    def create_object(self, url, data):
+    def create_object(self, url, data, **kwargs):
         self.logger.debug(f'Create object with tandoor api at url: {url}')
         response = requests.post(url, headers=self.headers, json=data)
 
@@ -63,7 +63,15 @@ class TandoorAPI:
             self.logger.info(f'Error creating object: {response.text}')
             raise RuntimeError(f'Error creating object: {response.text}')
 
-    def get_recipes(self, params={}, filters=[]):
+    def delete_object(self, url, obj_id, **kwargs):
+        self.logger.debug(f'Deleteing object with tandoor api at url: {url}')
+        response = requests.delete(f'{url}{obj_id}', headers=self.headers)
+
+        if response.status_code != 204:
+            self.logger.info(f'Error deleting object: {response.text}')
+            raise RuntimeError(f'Error deleting object: {response.text}')
+
+    def get_recipes(self, params={}, filters=[], **kwargs):
         """
         Fetch a list of recipes from the API.
         Returns:
@@ -74,7 +82,7 @@ class TandoorAPI:
         if params:
             params['include_children'] = self.include_children
             params['page_size'] = self.page_size
-            recipes = self.get_paged_results(url, params)
+            recipes = self.get_paged_results(url, params, **kwargs)
 
         if not isinstance(filters, list):
             filters = [filters]
@@ -99,9 +107,9 @@ class TandoorAPI:
     #     if response.status_code == 200:
     #         return response.json()
     #     else:
-    #         raise Exception(f"Failed to fetch recipe details. Status code: {response.status_code}")
+    #         raise Exception(f"Failed to fetch recipe details. Status code: {response.status_code}: {response.text}")
 
-    def get_keyword_tree(self, kw_id, params={}):
+    def get_keyword_tree(self, kw_id, params={}, **kwargs):
         """
         Fetch a keyword and it's descendants from the API.
         Returns:
@@ -111,12 +119,12 @@ class TandoorAPI:
         url = f"{self.url}keyword/"
         params['tree'] = kw_id
         params['page_size'] = 100
-        keywords = self.get_paged_results(url, params)
+        keywords = self.get_paged_results(url, params, **kwargs)
 
         self.logger.debug(f'Returning {len(keywords)} total keywords.')
         return keywords
 
-    def get_food_tree(self, food_id, params={}):
+    def get_food_tree(self, food_id, params={}, **kwargs):
         """
         Fetch a food and it's descendants from the API.
         Returns:
@@ -126,12 +134,12 @@ class TandoorAPI:
         url = f"{self.url}food/"
         params['tree'] = food_id
         params['page_size'] = 100
-        foods = self.get_paged_results(url, params)
+        foods = self.get_paged_results(url, params, **kwargs)
 
         self.logger.debug(f'Returning {len(foods)} total food.')
         return foods
 
-    def get_food(self, food_id, params={}):
+    def get_food(self, food_id, params={}, **kwargs):
         """
         Fetch a food and it's descendants from the API.
         Returns:
@@ -139,12 +147,12 @@ class TandoorAPI:
         """
 
         url = f"{self.url}food/"
-        food = self.get_single_result(url, food_id)
+        food = self.get_unpaged_results(url, food_id, **kwargs)
 
         self.logger.debug(f'Returning food {food["id"]}: {food["name"]}.')
         return food
 
-    def get_book(self, book_id, params={}):
+    def get_book(self, book_id, params={}, **kwargs):
         """
         Fetch a book from the API.
         Returns:
@@ -152,12 +160,12 @@ class TandoorAPI:
         """
 
         url = f"{self.url}recipe-book/"
-        book = self.get_single_result(url, book_id)
+        book = self.get_unpaged_results(url, book_id, **kwargs)
 
         self.logger.debug(f'Returning book {book["id"]}: {book["name"]}.')
         return book
 
-    def get_book_recipes(self, book, params={}):
+    def get_book_recipes(self, book, params={}, **kwargs):
         """
         Fetch all recipes in a book from the API.
         Returns:
@@ -165,7 +173,7 @@ class TandoorAPI:
         """
 
         url = f"{self.url}recipe-book-entry/?book={book.id}"
-        book_entries = self.get_single_result(url, '')
+        book_entries = self.get_unpaged_results(url, '', **kwargs)
         recipes = [be['recipe_content'] for be in book_entries]
         if book.filter:
             recipes += self.get_recipes(filters=book.filter)
@@ -173,7 +181,7 @@ class TandoorAPI:
         self.logger.debug(f'Returning book {book.id}: {book.name} with {len(recipes)} recipes.')
         return recipes
 
-    def create_meal_plan(self, recipe=None, title=None, servings=1, date=None, note=None, type=None):
+    def create_meal_plan(self, recipe=None, title=None, servings=1, date=None, note=None, type=None, **kwargs):
         url = f"{self.url}meal-plan/"
         plan = self.create_object(
             url,
@@ -188,7 +196,7 @@ class TandoorAPI:
                 'note': note,
                 'from_date': date.strftime('%Y-%m-%d'),
                 'to_date': date.strftime('%Y-%m-%d'),
-                'meal_type': self.get_single_result(f'{self.url}meal-type/', type)
+                'meal_type': self.get_unpaged_results(f'{self.url}meal-type/', type)
             }
         )
 
@@ -196,3 +204,11 @@ class TandoorAPI:
 
         return plan
 
+    def get_meal_plans(self, date, **kwargs):
+        url = f"{self.url}meal-plan/?from_date={date.strftime('%Y-%m-%d')}"
+        return self.get_unpaged_results(url, '', **kwargs)
+
+    def delete_meal_plan(self, obj_id, **kwargs):
+        url = f"{self.url}meal-plan/"
+        self.delete_object(url, obj_id)
+        self.logger.debug(f'Succesfully deleted meal plan {obj_id}.')

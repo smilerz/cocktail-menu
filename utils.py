@@ -101,7 +101,7 @@ def cached(ttl=240):
 	def decorator(func):
 		@wraps(func)
 		def wrapper(self, *args, **kwargs):
-			if not ttl or ttl <= 0:
+			if not ttl or ttl <= 0 or not kwargs.get('cache', True):
 				return func(self, *args, **kwargs)
 			expire_after = timedelta(minutes=ttl)
 			# uuid's are consistent across runs, hash() is not
@@ -125,7 +125,7 @@ def string_to_date(date_str):
 		if date_str[:1] == '-':
 			return datetime.strptime(date_str[1:], '%Y-%m-%d').replace(tzinfo=timezone.utc), False
 		else:
-			return datetime.strptime(date_str[1:], '%Y-%m-%d').replace(tzinfo=timezone.utc), True
+			return datetime.strptime(date_str, '%Y-%m-%d').replace(tzinfo=timezone.utc), True
 	else:
 		return False, False
 
