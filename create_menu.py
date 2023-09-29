@@ -4,6 +4,7 @@ import configargparse
 import yaml
 
 from mealplan import MealPlanManager
+from menu import convert_svg
 from models import Book, Food, Keyword, Recipe
 from solver import RecipePicker
 from tandoor_api import TandoorAPI
@@ -178,6 +179,20 @@ class Menu:
 
 		return self.recipe_picker.solve()
 
+	def generate_menu_file(self):
+		seperator = ' · '
+		# generating file?
+		# get target dimensions
+		# if no, return, if yes get template
+		# adding ingredients to template?
+		# get ingredient seperator
+		# if yes, get ingredients for all recipes
+		# format strings (recipe titles and ingredients) in text_to_be_replace: new_text dict
+		# load custom fonts
+		# inject text into template
+		# save template as new SVG and PNG and PDF
+		menu.logger.info('Generating menu file, this may take awhile.')
+		template = convert_svg(options=self.options)
 
 def parse_args():
 	parser = configargparse.ArgParser(
@@ -258,5 +273,7 @@ if __name__ == "__main__":
 		if args.cleanup_mp:
 			mpm.cleanup_uncooked(date=args.cleanup_date, mp_type=args.mp_type)
 		mpm.create_from_recipes(recipes, args.mp_type, date=args.mp_date, note=args.mp_note)
-		menu.tandoor.progress.update_step(step=100-menu.tandoor.progress.last_print_n)
-		menu.tandoor.progress.close()
+
+	menu.generate_menu_file()
+	menu.tandoor.progress.last_step()
+	menu.tandoor.progress.close()

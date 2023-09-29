@@ -13,6 +13,14 @@ Criteria can include:
 See config.ini or run create_menu.py --help for configuration guidance.
 
 
+## Installation
+``pip install -r requirements.txt``
+
+### Menu file installation requirements
+Creating a menu file from template requires install libcairo and some additional python libraries
+``sudo apt install libcairo2-dev``
+``pip install -r pdf_requirements.txt``
+
+
 ## Coming Soon
-- Automatically create meal plan
 - Inject Recipe Name and Ingredients into SVG template

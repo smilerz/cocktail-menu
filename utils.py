@@ -35,20 +35,11 @@ class TQDM(tqdm):
 		self.step = 0
 		self.n = 0
 
-
-def format_date(string, future=False):
-	date, after = string_to_date(string)
-	if date:
-		return date, after
-
-	after, offset, interval = split_offset(string)
-	# TODO support more time intervals that days
-	offset = timedelta(days=offset)
-	if future:
-		return datetime.now(timezone.utc) + offset, after
-	return datetime.now(timezone.utc) - offset, after
+	def last_step(self):
+		self.n = 100
 
 
+# logging methods
 def setup_logging(log='INFO'):
 	log_levels = {
 		'CRITICAL': logging.CRITICAL,
@@ -105,6 +96,11 @@ def setup_logging(log='INFO'):
 	return logger
 
 
+def get_log_level(log):
+	return log
+
+
+# utlity methods
 def str2bool(v):
 	if type(v) == bool or v is None:
 		return v
@@ -114,29 +110,7 @@ def str2bool(v):
 		return v.lower() in ("yes", "true", "1")
 
 
-def cached(func):
-	@wraps(func)
-	def wrapper(self, *args, **kwargs):
-		try:
-			ttl = self.ttl
-		except NameError:
-			try:
-				ttl = ttl
-			except NameError:
-				ttl = 240
-		if not ttl or ttl <= 0:
-			return func(self, *args, **kwargs)
-		expire_after = timedelta(minutes=ttl)
-		# uuid's are consistent across runs, hash() is not
-		key = str(uuid3(NAMESPACE_OID, ''.join([str(x) for x in args]) + str(kwargs)))
-		if key not in caches or caches[key]['expired'] < datetime.now():
-			caches[key] = {'data': func(self, *args, **kwargs), 'expired': datetime.now() + expire_after}
-			caches.sync()
-
-		return caches[key]['data']
-	return wrapper
-
-
+# date methods
 def string_to_date(date_str):
 	# Define the regex pattern
 	pattern = r'^-?\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$'
@@ -170,10 +144,45 @@ def split_offset(s):
 		raise ValueError(f"Invalid time offset format: {s}.  Value must be in form of '-XXdays'")
 
 
-def get_log_level(log):
-	return log
+def format_date(string, future=False):
+	date, after = string_to_date(string)
+	if date:
+		return date, after
+
+	after, offset, interval = split_offset(string)
+	# TODO support more time intervals that days
+	offset = timedelta(days=offset)
+	if future:
+		return datetime.now(timezone.utc) + offset, after
+	return datetime.now(timezone.utc) - offset, after
 
 
+def printable_date(date, format='short'):
+	if format == 'long':
+		return date.strftime('%B %d, %Y'), ordinal(date.day)
+	elif format == 'medium':
+		return date.strftime('%B %d'), ordinal(date.day)
+	elif format == 'number':
+		return date.strftime('%m/%d'), ordinal(date.day)
+	elif format == 'short':
+		return date.strftime('%b %d'), ordinal(date.day)
+	else:
+		return date.strftime('%m/%d/%Y'), ordinal(date.day)
+
+
+def ordinal(num):
+	suffixes = ['th', 'st', 'nd', 'rd']
+
+	remainder = num % 10
+	suffix = suffixes[0]  # default to 'th'
+
+	if remainder in [1, 2, 3] and not (11 <= num <= 13):
+		suffix = suffixes[remainder]
+
+	return suffix
+
+
+# decorator methods
 def display_progress(func):
 	@wraps(func)
 	def wrapper(self, *args, **kwargs):
@@ -188,4 +197,24 @@ def display_progress(func):
 		if progress:
 			progress.update_step()  # Increment progress by 1 step after each function call
 		return result
+	return wrapper
+
+def cached(func):
+	@wraps(func)
+	def wrapper(self, *args, **kwargs):
+		if ttl := kwargs.get('ttl', None) is None:
+			try:
+				ttl = self.ttl
+			except NameError:
+				ttl = 240
+		if not ttl or ttl <= 0:
+			return func(self, *args, **kwargs)
+		expire_after = timedelta(minutes=ttl)
+		# uuid's are consistent across runs, hash() is not
+		key = str(uuid3(NAMESPACE_OID, ''.join([str(x) for x in args]) + str(kwargs)))
+		if key not in caches or caches[key]['expired'] < datetime.now():
+			caches[key] = {'data': func(self, *args, **kwargs), 'expired': datetime.now() + expire_after}
+			caches.sync()
+
+		return caches[key]['data']
 	return wrapper

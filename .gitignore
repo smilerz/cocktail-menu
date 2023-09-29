@@ -3,3 +3,4 @@ cocktail-menu.log
 __pycache__/
 .vscode/launch.json
 caches.db*
+templates/
