@@ -1,4 +1,5 @@
 import json
+import os
 
 import configargparse
 import yaml
@@ -217,6 +218,7 @@ def parse_args():
 	# menu file creation related switches
 	parser.add_argument('--create_file', action='store_true', default=False, help='Create a menu from an SVG template.')
 	parser.add_argument('--file_format', type=str, default='PNG', help='File format to save the menu. Options: GIF, JPG, PNG, PDF.')
+	parser.add_argument('--output_dir', type=str, help='Defaults to template dir.  Full path required.')
 	parser.add_argument('--file_template', type=str, help='Name of SVG file located in templates/ directory.')
 	parser.add_argument('--fonts', nargs='*', default=[], help='Non-system fonts required for the SVG template.')
 	parser.add_argument('--replace_text', type=yaml.safe_load, help='Text to search for in the template and replace with menu details.')
@@ -239,6 +241,8 @@ def validate_args(args):
 			valid = False
 			raise RuntimeError('"mp_type" must be a valid Meal Type ID.')
 		args.mp_date, _ = format_date(args.mp_date, future=True)
+		if not args.output_dir:
+			args.output_dir = os.path.join(os.getcwd(), 'templates')
 		if args.cleanup_mp:
 			args.cleanup_date, _ = format_date(args.cleanup_date)
 			print(f'Uncooked meal plans will be cleaned up beginning on {args.cleanup_date.strftime("%Y-%m-%d")} with meal type {args.mp_type}.')
@@ -275,5 +279,6 @@ if __name__ == "__main__":
 		mpm.create_from_recipes(recipes, args.mp_type, date=args.mp_date, note=args.mp_note)
 
 	menu.generate_menu_file()
-	menu.tandoor.progress.last_step()
-	menu.tandoor.progress.close()
+	if menu.tandoor.progress:
+		menu.tandoor.progress.last_step()
+		menu.tandoor.progress.close()

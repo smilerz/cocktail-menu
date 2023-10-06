@@ -42,6 +42,7 @@ choices : 5                                             # number of recipes to c
 [menufile]
 # create_file: false                                           # Create a menu from an SVG template
 # file_format: PNG                                             # options: 'GIF', 'JPG', 'PNG', 'PDF'
+# output_dir:                                                  # template dir by default
 # file_template: example.svg                                   # name of SVG file located in templates/ directory
 # fonts: [{'name': 'example', 'file': 'example.ttf'}]          # non-system fonts required in SVG located in templates directory
 

@@ -15,8 +15,9 @@ class MenuGenerator:
         self.options = options
         self.api = api
         self.template_dir = os.path.join(os.getcwd(), 'templates')
+        self.output_dir = options.output_dir
         self.input_file = options.file_template
-        self.temp_file = os.path.join(self.template_dir, 'temp.svg')
+        self.temp_file = os.path.join(self.output_dir, 'temp.svg')
         self.output_file = self.input_file.split('.')[0]
         self.ext = options.file_format
         self.fonts = [json.loads(f.replace("'", '"')) for f in options.fonts]
@@ -42,9 +43,9 @@ class MenuGenerator:
         drawing = svg2rlg(self.temp_file)
 
         if self.ext.lower() == 'pdf':
-            renderPDF.drawToFile(drawing, os.path.join(self.template_dir, f'{self.output_file}.{self.ext}'))
+            renderPDF.drawToFile(drawing, os.path.join(self.output_dir, f'{self.output_file}.{self.ext}'))
         else:
-            renderPM.drawToFile(drawing, os.path.join(self.template_dir, f'{self.output_file}.{self.ext}'), fmt=self.ext)
+            renderPM.drawToFile(drawing, os.path.join(self.output_dir, f'{self.output_file}.{self.ext}'), fmt=self.ext)
 
     def find_and_replace(self, recipes, template):
         if date_text := self.replace_text.get('date_text', None):
@@ -73,15 +74,19 @@ class MenuGenerator:
 
         def _chunk_ingredients(before, after):
             pairs = []
-            # after = ' '.join(after).split()
+            seperator = self.options.seperator.replace(" ", "~|~")
+            after = f' {seperator} '.join(after).split()
             for x in before:
                 chunk = ''
-                while after and len(x) > len(chunk + self.options.seperator + after[0]):
-                    chunk = chunk + self.options.seperator + after.pop(0) if chunk != '' else after.pop(0)
-                if after and ' ' in after[0]:
-                    mini_after = after[0].split()
-                    while mini_after and len(x) > len(chunk + ' ' + after[0]):
-                        chunk = chunk + ' ' + mini_after.pop(0) if chunk != '' else mini_after.pop(0)
+                while after and len(x) >= len(chunk + after[0]):
+                    next_chunk = after.pop(0)
+                    if chunk == '':
+                        if next_chunk == seperator:
+                            next_chunk = after.pop(0)
+                        chunk += next_chunk
+                    else:
+                        chunk += (" " + next_chunk.replace('~|~', ' ')).replace("  ", " ")
+
                 if chunk:
                     pairs.append((x, chunk))
                 else:
@@ -98,19 +103,19 @@ class MenuGenerator:
 
         # confirm that all after strings are shorter than before strings.
         for y in range(len(temp_text)):
-            text_fits = len(temp_text[y]['name']) > len(temp_text[y]['after_name']) and _length_replace_ing(temp_text[y]) > _length_recipe_ing(temp_text[y]['after_ing'])
+            text_fits = len(temp_text[y]['name']) >= len(temp_text[y]['after_name']) and _length_replace_ing(temp_text[y]) >= _length_recipe_ing(temp_text[y]['after_ing'])
             if not text_fits:
                 truncate_text = True
                 # if there are no other slots that the name and ingredients fit - just truncate the text
                 if (
-                    any(len(t['name']) > len(temp_text[y]['after_name']) for t in temp_text) and
-                    any(_length_replace_ing(t) > _length_recipe_ing(temp_text[y]['after_ing']) for t in temp_text)
+                    any(len(t['name']) >= len(temp_text[y]['after_name']) for t in temp_text) and
+                    any(_length_replace_ing(t) >= _length_recipe_ing(temp_text[y]['after_ing']) for t in temp_text)
                 ):
                     for z in range(len(temp_text)):
                         # if swapping the recipes between two positions fits the text then do that
                         if (
-                            len(temp_text[z]['name']) > len(temp_text[y]['after_name']) and _length_replace_ing(temp_text[z]) > _length_recipe_ing(temp_text[y]['after_ing']) and
-                            len(temp_text[y]['name']) > len(temp_text[z]['after_name']) and _length_replace_ing(temp_text[y]) > _length_recipe_ing(temp_text[z]['after_ing'])
+                            len(temp_text[z]['name']) > len(temp_text[y]['after_name']) and _length_replace_ing(temp_text[z]) >= _length_recipe_ing(temp_text[y]['after_ing']) and
+                            len(temp_text[y]['name']) > len(temp_text[z]['after_name']) and _length_replace_ing(temp_text[y]) >= _length_recipe_ing(temp_text[z]['after_ing'])
                         ):
                             tmp_name = temp_text[y]['after_name']
                             tmp_ing = temp_text[y]['after_ing']

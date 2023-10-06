@@ -21,7 +21,7 @@ class RecipePicker:
         self.solver += lpSum(self.recipe_vars.values()) == self.numrecipes
 
         # introduce randomness to recipe selection
-        self.solver += lpSum((10 + random.random()) * self.recipe_vars[r.id] for r in self.recipes)
+        self.solver += lpSum((1 + random.random()) * self.recipe_vars[r.id] for r in self.recipes)
 
     def select_recipes(self, num_recipes):
         self.solver += lpSum(self.recipes[i] for i in range(len(self.recipes))) <= self.numrecipes, "MaxRecipes"
@@ -140,4 +140,5 @@ class RecipePicker:
             self.logger.info('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
             self.logger.info('No solution found, adjustment of criteria required.')
             self.logger.info('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
+            raise RuntimeError('No solution found.')
         return [r for r in self.recipes if value(self.recipe_vars[r.id]) == 1]
