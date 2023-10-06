@@ -1,6 +1,8 @@
 # tandoor-menu-generator
 
 Using your recipe data in Tandoor this menu generator will generate a menuy of X recipes with defined constraints.
+- Optionally create Meal Plans on Tandoor
+- Optionally inject Recipe name and ingredients into a file template for printing or browsing on the web
 
 Criteria can include:
 - food
@@ -13,6 +15,7 @@ Criteria can include:
 See config.ini or run create_menu.py --help for configuration guidance.
 
 
+
 ## Installation
 ``pip install -r requirements.txt``
 
@@ -21,6 +24,3 @@ Creating a menu file from template requires install libcairo and some additional
 ``sudo apt install libcairo2-dev``
 ``pip install -r pdf_requirements.txt``
 
-
-## Coming Soon
-- Inject Recipe Name and Ingredients into SVG template
