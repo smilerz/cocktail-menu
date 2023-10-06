@@ -1,0 +1,20 @@
+# builds requirements for tandoor-menu-generator into nodered
+FROM nodered/node-red:latest-debian
+USER root
+
+RUN apt-get update && apt-get install -y libcairo2-dev libssl-dev && \
+    mkdir /temp
+WORKDIR /temp
+RUN wget https://www.python.org/ftp/python/3.9.0/Python-3.9.0.tgz && \
+    tar -xf Python-3.9.0.tgz
+WORKDIR /temp/Python-3.9.0
+RUN ./configure --enable-optimizations && \
+    make -j 8 && \
+    make altinstall && \
+    python3.9 -m venv /opt/venv/menu
+
+ENV PATH="/opt/venv/menu/bin:$PATH"
+
+COPY pdf_requirements.txt /opt/venv/menu/
+RUN /opt/venv/menu/bin/python -m pip install --upgrade pip setuptools
+RUN /opt/venv/menu/bin/pip install -r /opt/venv/menu/pdf_requirements.txt
