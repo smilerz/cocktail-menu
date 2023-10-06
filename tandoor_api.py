@@ -25,6 +25,10 @@ class TandoorAPI:
             'Authorization': f'Bearer {self.token}'
         }
 
+    def update_progress(self):
+        if self.progress:
+            self.progress.update_step()
+
     @display_progress
     @cached
     def get_paged_results(self, url, params, **kwargs):
@@ -97,23 +101,23 @@ class TandoorAPI:
         self.logger.debug(f'Returning {len(recipes)} total recipes.')
         return recipes
 
-    # @display_progress
-    # @cached
-    # def get_recipe_details(self, recipe_id):
-    #     """
-    #     Fetch details of a specific recipe by its ID.
-    #     Args:
-    #         recipe_id (str): The ID of the recipe to retrieve.
-    #     Returns:
-    #         dict: Details of the recipe in JSON-LD format.
-    #     """
-    #     url = f"{self.base_url}/recipes/{recipe_id}"
-    #     response = requests.get(url)
+    @display_progress
+    @cached
+    def get_recipe_details(self, recipe_id):
+        """
+        Fetch details of a specific recipe by its ID.
+        Args:
+            recipe_id (str): The ID of the recipe to retrieve.
+        Returns:
+            dict: Details of the recipe in JSON-LD format.
+        """
+        url = f"{self.url}recipe/{recipe_id}"
+        response = requests.get(url, headers=self.headers)
 
-    #     if response.status_code == 200:
-    #         return response.json()
-    #     else:
-    #         raise Exception(f"Failed to fetch recipe details. Status code: {response.status_code}: {response.text}")
+        if response.status_code == 200:
+            return response.json()
+        else:
+            raise Exception(f"Failed to fetch recipe details. Status code: {response.status_code}: {response.text}")
 
     def get_keyword_tree(self, kw_id, params={}, **kwargs):
         """

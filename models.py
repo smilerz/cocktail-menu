@@ -40,7 +40,7 @@ class Recipe(SetEnabledObjects):
             self.cookedon = None
         self.createdon = datetime.fromisoformat(json_recipe['created_at'])
         self.rating = json_recipe['rating']
-        self.ingredients = None  # List of Ingredient objects
+        self.ingredients = []  # List of Ingredient objects5
 
     @staticmethod
     def recipesWithKeyword(recipes, keywords):
@@ -87,6 +87,12 @@ class Recipe(SetEnabledObjects):
             return [r for r in recipes if 0 < getattr(r, 'rating', None) <= abs(rating)]
         else:
             return [r for r in recipes if getattr(r, 'rating', 0) >= rating]
+
+    def addDetails(self, api):
+        recipe = api.get_recipe_details(self.id)
+        for f in [i['food'] for s in recipe['steps'] for i in s['ingredients']]:
+            self.ingredients.append(Food(f))
+        pass
 
 
 class Keyword(SetEnabledObjects):

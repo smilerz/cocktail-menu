@@ -38,3 +38,28 @@ choices : 5                                             # number of recipes to c
 # mp_note : Created by: Tandoor Menu Generator
 # cleanup_mp : False                                # Delete uncooked mealplans at next execution
 # cleanup_date : -7days                              # Starting date to cleanup uncooked mealplans in YYYY-MM-DD format or -XXdays
+
+[menufile]
+# create_file: false                                           # Create a menu from an SVG template
+# file_format: PNG                                             # options: 'GIF', 'JPG', 'PNG', 'PDF'
+# file_template: example.svg                                   # name of SVG file located in templates/ directory
+# fonts: [{'name': 'example', 'file': 'example.ttf'}]          # non-system fonts required in SVG located in templates directory
+
+
+replace_text: {
+#    date_text: {                                               # (optional) search for text in DATE and replace with menu plan date
+#        'date': 'date lorem ipsum',                               #       text must match exactly, including case
+#        'ordinal': 'XYZ123',                                      #       when provided will calculate English ordinal suffix (1st, 2nd, etc)
+#        'format': 'short                                          #       format of date: long, medium, short, numbers
+#    }
+#    recipe_text:[{
+#        'name' : 'Title1: Lorem ipsum dolor sit amet', # search for the text in NAME and replace with recipe name
+#        'ingredients': [                                              # (optional) search for text in INGREDIENTS and replace with recipe ingredients
+#            'Line1: Lorem ipsum dolor sit amet, consectetur adip',    # if concatanating ingredients exceeds length of first line of ingredients
+#            'Line2: Lorem ipsum dolor sit amet, consectetur adip',    # ingredients will be truncated and continue on the next line
+#            'Line3: Lorem ipsum dolor sit amet, consectetur adip',
+#            'Line4: Lorem ipsum dolor sit amet, consectetur adip'
+#            ]
+#        }]
+#        }
+# seperator: ' - '                                               # seperator to use when concatanating ingredients

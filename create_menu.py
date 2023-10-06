@@ -4,7 +4,7 @@ import configargparse
 import yaml
 
 from mealplan import MealPlanManager
-from menu import convert_svg
+from menu import MenuGenerator
 from models import Book, Food, Keyword, Recipe
 from solver import RecipePicker
 from tandoor_api import TandoorAPI
@@ -180,19 +180,10 @@ class Menu:
 		return self.recipe_picker.solve()
 
 	def generate_menu_file(self):
-		seperator = ' · '
-		# generating file?
-		# get target dimensions
-		# if no, return, if yes get template
-		# adding ingredients to template?
-		# get ingredient seperator
-		# if yes, get ingredients for all recipes
-		# format strings (recipe titles and ingredients) in text_to_be_replace: new_text dict
-		# load custom fonts
-		# inject text into template
-		# save template as new SVG and PNG and PDF
-		menu.logger.info('Generating menu file, this may take awhile.')
-		template = convert_svg(options=self.options)
+		self.logger.info('Generating menu file, this may take awhile.')
+		menu = MenuGenerator(self.tandoor, self.options, self.logger)
+		menu.write_menu(recipes)
+
 
 def parse_args():
 	parser = configargparse.ArgParser(
@@ -217,14 +208,23 @@ def parse_args():
 	parser.add_argument('--createdon', nargs='*', default=[], help="condition = date in YYYY-MM-DD format (use 'XXdays' for relative date XX days ago)")
 	parser.add_argument('--include_children', action='store_true', default=True, help='For keywords and foods, child objects also satisfy the condition.')
 	# mealplan related switches
-	parser.add_argument('--create_mp', action='store_true', default=True, help='Add mealplans for chosen recipes.')
+	parser.add_argument('--create_mp', action='store_true', default=False, help='Add mealplans for chosen recipes.')
 	parser.add_argument('--mp_date', type=str, default='0days', help='Date to create mealplan in YYYY-MM-DD format or XXdays.')
 	parser.add_argument('--mp_type', help='ID of meal play type; seperate mealplan types are strongly encouraged.')
 	parser.add_argument('--mp_note', type=str, default='Created by: Tandoor Menu Generator.')
 	parser.add_argument('--cleanup_mp', action='store_true', default=False, help='Delete uncooked mealplans at next execution.')
 	parser.add_argument('--cleanup_date', type=str, default='-7days', help='Starting date to cleanup uncooked mealplans in YYYY-MM-DD format or -XXdays.')
+	# menu file creation related switches
+	parser.add_argument('--create_file', action='store_true', default=False, help='Create a menu from an SVG template.')
+	parser.add_argument('--file_format', type=str, default='PNG', help='File format to save the menu. Options: GIF, JPG, PNG, PDF.')
+	parser.add_argument('--file_template', type=str, help='Name of SVG file located in templates/ directory.')
+	parser.add_argument('--fonts', nargs='*', default=[], help='Non-system fonts required for the SVG template.')
+	parser.add_argument('--replace_text', type=yaml.safe_load, help='Text to search for in the template and replace with menu details.')
+	parser.add_argument('--seperator', type=str, default=' - ', help='seperator to use when concatanating ingredients.')
 
-	return parser.parse_args()
+	args = parser.parse_args()
+	args.seperator = args.seperator.replace("'", "").replace('"', '')
+	return args
 
 
 def validate_args(args):

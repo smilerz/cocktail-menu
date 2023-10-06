@@ -199,6 +199,7 @@ def display_progress(func):
 		return result
 	return wrapper
 
+
 def cached(func):
 	@wraps(func)
 	def wrapper(self, *args, **kwargs):

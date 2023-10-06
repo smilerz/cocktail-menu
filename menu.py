@@ -1,4 +1,6 @@
+import json
 import os
+import re
 
 from reportlab.graphics import renderPDF, renderPM
 from reportlab.pdfbase import pdfmetrics
@@ -8,63 +10,139 @@ from svglib.svglib import svg2rlg
 from utils import printable_date
 
 
-# Function to load an SVG file, execute getStrings() method, find and replace text, and save as PNG
-def convert_svg(input_file=None, output_file=None, file_format=None, options=None):
-    # Load the SVG file as a ReportLab graphics object
-    filetypes = ['gif', 'jpg', 'png', 'pdf']
-    template_dir = os.path.join(os.getcwd(), 'templates')
-    input_file = 'CocktailMenu.svg'
-    output_file = 'CocktailMenu'
-    output_type = 'svg'
-    fonts = [
-        {'name': 'DrawveticaMini', 'file': 'DrawveticaMini.ttf'},
-        {'name': 'GrutchShaded', 'file': 'GrutchShaded.ttf'},
-        {'name': 'Heavyweight', 'file': 'HEAVYWEI.TTF'},
-        {'name': 'vtksnoise', 'file': 'vtksnoise.ttf'}
-    ]
+class MenuGenerator:
+    def __init__(self, api, options, logger):
+        self.options = options
+        self.api = api
+        self.template_dir = os.path.join(os.getcwd(), 'templates')
+        self.input_file = options.file_template
+        self.temp_file = os.path.join(self.template_dir, 'temp.svg')
+        self.output_file = self.input_file.split('.')[0]
+        self.ext = options.file_format
+        self.fonts = [json.loads(f.replace("'", '"')) for f in options.fonts]
+        self.replace_text = options.replace_text
+        self.seperator = options.seperator
 
-    date_text = {'date': 'Sept 20', 'superscript': 'txxh'}
-    date, ordinal = printable_date(options.mp_date)
-    text = []
+    def write_menu(self, recipes):
+        template = self.open_template()
+        if any('ingredients' in r for r in self.options.replace_text['recipe_text']):
+            for r in recipes:
+                r.addDetails(self.api)
+        template = self.find_and_replace(recipes, template)
+        self.write_temp_template(template)
+        self.convert_svg()
+        self.cleanup()
 
-    # Open file and read contents
-    with open(os.path.join(template_dir, input_file)) as f:
-        source = f.read()
-        # update dates if they exist
-    if d := date_text.get('date', None):
-        source.replace(d, date)
-    if d := date_text.get('superscript', None):
-        source.replace(d, ordinal)
-    with open(os.path.join(template_dir, 'temp.svg'), 'w') as f:
-        f.write(source)
+    def convert_svg(self):
+        # Register font files
+        for f in self.fonts:
+            pdfmetrics.registerFont(TTFont(f['name'], os.path.join(self.template_dir, f['file'])))
 
-    # Register font files
-    for f in fonts:
-        pdfmetrics.registerFont(TTFont(f['name'], os.path.join(template_dir, f['file'])))
+        # Load the SVG file as a ReportLab graphics object
+        drawing = svg2rlg(self.temp_file)
 
-    # Import SVG
-    drawing = svg2rlg(os.path.join(template_dir, 'temp.svg'))
+        if self.ext.lower() == 'pdf':
+            renderPDF.drawToFile(drawing, os.path.join(self.template_dir, f'{self.output_file}.{self.ext}'))
+        else:
+            renderPM.drawToFile(drawing, os.path.join(self.template_dir, f'{self.output_file}.{self.ext}'), fmt=self.ext)
 
-    # find and replace text
+    def find_and_replace(self, recipes, template):
+        if date_text := self.replace_text.get('date_text', None):
+            date, ordinal = printable_date(self.options.mp_date, format=date_text.get('format', None))
 
-    if output_type.lower() == 'pdf':
-        renderPDF.drawToFile(drawing, os.path.join(template_dir, f'{output_file}.{output_type}'))
-    else:
-        renderPM.drawToFile(drawing, os.path.join(template_dir, f'{output_file}.{output_type}'), fmt=output_type)
+            # update dates if they exist
+            if d := date_text.get('date', None):
+                template = re.sub(re.escape(d), date, template)
+            if d := date_text.get('ordinal', None):
+                template = re.sub(re.escape(d), ordinal, template)
+        # create replacement dict
+        replacement_dict = self.prepare_replacement(recipes)
 
-    pass
+        for k, v in replacement_dict.items():
+            self.api.update_progress()
+            template = re.sub(re.escape(k), v, template)
 
+        return template
 
-# import fitz
-# from svglib import svglib
-# from reportlab.graphics import renderPDF
+    def prepare_replacement(self, recipes):
+        def _length_replace_ing(x):
+            return len(' '.join(x['ingredients']))
 
-# # Convert svg to pdf in memory with svglib+reportlab
-# # directly rendering to png does not support transparency nor scaling
-# drawing = svglib.svg2rlg(path="input.svg")
-# pdf = renderPDF.drawToString(drawing)
+        def _length_recipe_ing(x):
+            return len(self.options.seperator.join(x))
 
-# # Open pdf with fitz (pyMuPdf) to convert to PNG
-# doc = fitz.Document(stream=pdf)
-# pix = doc.load_page(0).get_pixmap(alpha=True, dpi=300)
-# pix.save("output.png")
+        def _chunk_ingredients(before, after):
+            pairs = []
+            # after = ' '.join(after).split()
+            for x in before:
+                chunk = ''
+                while after and len(x) > len(chunk + self.options.seperator + after[0]):
+                    chunk = chunk + self.options.seperator + after.pop(0) if chunk != '' else after.pop(0)
+                if after and ' ' in after[0]:
+                    mini_after = after[0].split()
+                    while mini_after and len(x) > len(chunk + ' ' + after[0]):
+                        chunk = chunk + ' ' + mini_after.pop(0) if chunk != '' else mini_after.pop(0)
+                if chunk:
+                    pairs.append((x, chunk))
+                else:
+                    pairs.append((x, ''))
+            return pairs
+
+        # create temporary array to assign before/after values
+        temp_text = []
+        for x in range(len(self.options.replace_text['recipe_text'])):
+            before = self.options.replace_text['recipe_text'][x]
+            before['after_name'] = recipes[x].name
+            before['after_ing'] = [x.name for x in recipes[x].ingredients]
+            temp_text.append(before)
+
+        # confirm that all after strings are shorter than before strings.
+        for y in range(len(temp_text)):
+            text_fits = len(temp_text[y]['name']) > len(temp_text[y]['after_name']) and _length_replace_ing(temp_text[y]) > _length_recipe_ing(temp_text[y]['after_ing'])
+            if not text_fits:
+                truncate_text = True
+                # if there are no other slots that the name and ingredients fit - just truncate the text
+                if (
+                    any(len(t['name']) > len(temp_text[y]['after_name']) for t in temp_text) and
+                    any(_length_replace_ing(t) > _length_recipe_ing(temp_text[y]['after_ing']) for t in temp_text)
+                ):
+                    for z in range(len(temp_text)):
+                        # if swapping the recipes between two positions fits the text then do that
+                        if (
+                            len(temp_text[z]['name']) > len(temp_text[y]['after_name']) and _length_replace_ing(temp_text[z]) > _length_recipe_ing(temp_text[y]['after_ing']) and
+                            len(temp_text[y]['name']) > len(temp_text[z]['after_name']) and _length_replace_ing(temp_text[y]) > _length_recipe_ing(temp_text[z]['after_ing'])
+                        ):
+                            tmp_name = temp_text[y]['after_name']
+                            tmp_ing = temp_text[y]['after_ing']
+                            temp_text[y]['after_name'] = temp_text[z]['after_name']
+                            temp_text[y]['after_ing'] = temp_text[z]['after_ing']
+                            temp_text[z]['after_name'] = tmp_name
+                            temp_text[z]['after_ing'] = tmp_ing
+                            truncate_text = False
+                if truncate_text:
+                    temp_text[y]['after_name'] = temp_text[y]['after_name'][:len(temp_text[y]['name'])]
+                    new_ing = []
+                    while temp_text[y]['after_ing'] and _length_replace_ing(temp_text[y]) > _length_recipe_ing(new_ing):
+                        new_ing.append(temp_text[y]['after_ing'].pop(0))
+                    temp_text[y]['after_ing'] = new_ing
+
+        # create replacement dict in the form of key:value = before:after
+        replacements = {}
+        for y in temp_text:
+            replacements[y['name']] = y['after_name']
+            after_chunks = _chunk_ingredients(y['ingredients'], y['after_ing'])
+            for pair in after_chunks:
+                replacements[pair[0]] = pair[1]
+        return replacements
+
+    def open_template(self):
+        # Open file and read contents
+        with open(os.path.join(self.template_dir, self.input_file)) as f:
+            return f.read()
+
+    def write_temp_template(self, template):
+        with open(self.temp_file, 'w') as f:
+            f.write(template)
+
+    def cleanup(self):
+        os.remove(self.temp_file)
