@@ -18,3 +18,5 @@ ENV PATH="/opt/venv/menu/bin:$PATH"
 COPY pdf_requirements.txt /opt/venv/menu/
 RUN /opt/venv/menu/bin/python -m pip install --upgrade pip setuptools
 RUN /opt/venv/menu/bin/pip install -r /opt/venv/menu/pdf_requirements.txt
+
+WORKDIR /usr/src/node-red
