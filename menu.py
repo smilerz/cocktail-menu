@@ -14,6 +14,7 @@ class MenuGenerator:
     def __init__(self, api, options, logger):
         self.options = options
         self.api = api
+        self.logger = logger
         self.template_dir = os.path.join(os.getcwd(), 'templates')
         self.output_dir = options.output_dir
         self.input_file = options.file_template
