@@ -44,11 +44,13 @@ class MenuGenerator:
         drawing = svg2rlg(self.temp_file)
 
         if self.ext.lower() == 'pdf':
-            self.logger.debug(f'Writing PDF to {os.path.join(self.output_dir, f'{self.output_file}.{self.ext}')}.')
-            renderPDF.drawToFile(drawing, os.path.join(self.output_dir, f'{self.output_file}.{self.ext}'))
+            output_file = os.path.join(self.output_dir, f'{self.output_file}.{self.ext}')
+            self.logger.debug(f'Writing PDF to {output_file}.')
+            renderPDF.drawToFile(drawing, output_file)
         else:
-            self.logger.debug(f'Writing {self.ext} to {os.path.join(self.output_dir, f'{self.output_file}.{self.ext}')}.')
-            renderPM.drawToFile(drawing, os.path.join(self.output_dir, f'{self.output_file}.{self.ext}'), fmt=self.ext)
+            output_file = os.path.join(self.output_dir, f'{self.output_file}.{self.ext}')
+            self.logger.debug(f'Writing {self.ext} to {output_file}.')
+            renderPM.drawToFile(drawing, output_file, fmt=self.ext)
 
     def find_and_replace(self, recipes, template):
         if date_text := self.replace_text.get('date_text', None):
