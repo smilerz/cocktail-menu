@@ -37,14 +37,17 @@ class MenuGenerator:
     def convert_svg(self):
         # Register font files
         for f in self.fonts:
+            self.logger.debug(f'Loading font {f["name"]} from {os.path.join(self.template_dir, f["file"])}.')
             pdfmetrics.registerFont(TTFont(f['name'], os.path.join(self.template_dir, f['file'])))
 
         # Load the SVG file as a ReportLab graphics object
         drawing = svg2rlg(self.temp_file)
 
         if self.ext.lower() == 'pdf':
+            self.logger.debug(f'Writing PDF to {os.path.join(self.output_dir, f'{self.output_file}.{self.ext}')}.')
             renderPDF.drawToFile(drawing, os.path.join(self.output_dir, f'{self.output_file}.{self.ext}'))
         else:
+            self.logger.debug(f'Writing {self.ext} to {os.path.join(self.output_dir, f'{self.output_file}.{self.ext}')}.')
             renderPM.drawToFile(drawing, os.path.join(self.output_dir, f'{self.output_file}.{self.ext}'), fmt=self.ext)
 
     def find_and_replace(self, recipes, template):
@@ -142,10 +145,12 @@ class MenuGenerator:
 
     def open_template(self):
         # Open file and read contents
+        self.logger.debug(f'Opening template from {os.path.join(self.template_dir, self.input_file)}.')
         with open(os.path.join(self.template_dir, self.input_file)) as f:
             return f.read()
 
     def write_temp_template(self, template):
+        self.logger.debug(f'Writing temporary template to {self.temp_file}.')
         with open(self.temp_file, 'w') as f:
             f.write(template)
 
