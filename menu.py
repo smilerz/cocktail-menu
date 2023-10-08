@@ -4,6 +4,7 @@ import re
 
 from reportlab.graphics import renderPDF, renderPM
 from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.pdfmetrics import registerFontFamily
 from reportlab.pdfbase.ttfonts import TTFont
 from svglib.svglib import svg2rlg
 
@@ -39,7 +40,10 @@ class MenuGenerator:
         # Register font files
         for f in self.fonts:
             self.logger.debug(f'Loading font {f["name"]} from {os.path.join(self.template_dir, f["file"])}.')
-            pdfmetrics.registerFont(TTFont(f['name'], os.path.join(self.template_dir, f['file'])))
+            font = TTFont(f['name'], os.path.join(self.template_dir, f['file']))
+            pdfmetrics.registerFont(font)
+            registerFontFamily(f['name'],normal=f['name'])
+            self.logger.debug(f'Font {font.fontName} loaded succesfully.')
 
         # Load the SVG file as a ReportLab graphics object
         drawing = svg2rlg(self.temp_file)
