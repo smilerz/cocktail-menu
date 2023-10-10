@@ -48,14 +48,16 @@ class MenuGenerator:
         # Load the SVG file as a ReportLab graphics object
         drawing = svg2rlg(self.temp_file)
 
+        temp_output = os.path.join(os.getcwd(), f'temp.{self.ext}')
         if self.ext.lower() == 'pdf':
             output_file = os.path.join(self.output_dir, f'{self.output_file}.{self.ext}')
             self.logger.debug(f'Writing PDF to {output_file}.')
-            renderPDF.drawToFile(drawing, output_file)
+            renderPDF.drawToFile(drawing, temp_output)
         else:
             output_file = os.path.join(self.output_dir, f'{self.output_file}.{self.ext}')
             self.logger.debug(f'Writing {self.ext} to {output_file}.')
-            renderPM.drawToFile(drawing, output_file, fmt=self.ext)
+            renderPM.drawToFile(drawing, temp_output, fmt=self.ext)
+        os.rename(temp_output, output_file)
         self.archive(output_file)
 
     def find_and_replace(self, recipes, template):
