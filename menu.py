@@ -6,7 +6,6 @@ from shutil import copyfile
 
 from reportlab.graphics import renderPDF, renderPM
 from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.pdfmetrics import registerFontFamily
 from reportlab.pdfbase.ttfonts import TTFont
 from svglib.svglib import svg2rlg
 
@@ -44,7 +43,6 @@ class MenuGenerator:
             self.logger.debug(f'Loading font {f["name"]} from {os.path.join(self.template_dir, f["file"])}.')
             font = TTFont(f['name'], os.path.join(self.template_dir, f['file']))
             pdfmetrics.registerFont(font)
-            registerFontFamily(f['name'], normal=f['name'])
             self.logger.debug(f'Font {font.fontName} loaded succesfully.')
 
         # Load the SVG file as a ReportLab graphics object
@@ -176,7 +174,7 @@ class MenuGenerator:
             if not os.path.exists(archive_dir):
                 os.makedirs(archive_dir)
             filename, ext = os.path.splitext(os.path.basename(target_name))
-            archive_file = (a_file := f"{filename}-{(dt := datetime.now().strftime('%y%m%d'))}")
+            archive_file = (a_file := f"{filename}-{(datetime.now().strftime('%y%m%d'))}")
             count = 1
             while os.path.exists(os.path.join(archive_dir, f"{archive_file}{ext}")):
                 archive_file = a_file + '_' + str(count)

@@ -1,3 +1,4 @@
+import random
 from datetime import datetime
 
 
@@ -91,8 +92,11 @@ class Recipe(SetEnabledObjects):
     def addDetails(self, api):
         recipe = api.get_recipe_details(self.id)
         for f in [i['food'] for s in recipe['steps'] for i in s['ingredients']]:
+            if not f['food_onhand']:
+                onhand_substitutes = api.get_food_substitutes(f['id'], substitute='food')
+                if onhand_substitutes:
+                    f = api.get_food(random.choice(onhand_substitutes)['id'])
             self.ingredients.append(Food(f))
-        pass
 
 
 class Keyword(SetEnabledObjects):

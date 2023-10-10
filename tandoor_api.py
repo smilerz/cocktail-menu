@@ -222,3 +222,15 @@ class TandoorAPI:
         url = f"{self.url}meal-plan/"
         self.delete_object(url, obj_id)
         self.logger.debug(f'Succesfully deleted meal plan {obj_id}.')
+
+    @display_progress
+    @cached
+    def get_food_substitutes(self, id, substitute):
+        url = f"{self.url}{substitute}/{id}/substitutes/"
+        self.logger.debug(f'Connecting to tandoor api at url: {url}')
+        response = requests.get(url, headers=self.headers, params={'onhand': 1})
+
+        if response.status_code != 200:
+            self.logger.info(f"Failed to fetch food substitutes. Status code: {response.status_code}: {response.text}")
+            raise Exception(f"Failed to fetch food substitutes. Status code: {response.status_code}: {response.text}")
+        return json.loads(response.content)
