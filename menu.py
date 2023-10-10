@@ -2,7 +2,7 @@ import json
 import os
 import re
 from datetime import datetime
-from shutil import copyfile
+from shutil import copy2
 
 from reportlab.graphics import renderPDF, renderPM
 from reportlab.pdfbase import pdfmetrics
@@ -180,4 +180,4 @@ class MenuGenerator:
                 archive_file = a_file + '_' + str(count)
                 count += 1
             # os.rename(self.temp_file, os.path.join(archive_dir, "{archive_file}.{ext}"))
-            copyfile(file, os.path.join(archive_dir, f"{archive_file}{ext}"))
+            copy2(file, os.path.join(archive_dir, f"{archive_file}{ext}"))
