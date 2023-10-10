@@ -1,6 +1,8 @@
 import json
 import os
 import re
+from datetime import datetime
+from shutil import copyfile
 
 from reportlab.graphics import renderPDF, renderPM
 from reportlab.pdfbase import pdfmetrics
@@ -42,7 +44,7 @@ class MenuGenerator:
             self.logger.debug(f'Loading font {f["name"]} from {os.path.join(self.template_dir, f["file"])}.')
             font = TTFont(f['name'], os.path.join(self.template_dir, f['file']))
             pdfmetrics.registerFont(font)
-            registerFontFamily(f['name'],normal=f['name'])
+            registerFontFamily(f['name'], normal=f['name'])
             self.logger.debug(f'Font {font.fontName} loaded succesfully.')
 
         # Load the SVG file as a ReportLab graphics object
@@ -56,6 +58,7 @@ class MenuGenerator:
             output_file = os.path.join(self.output_dir, f'{self.output_file}.{self.ext}')
             self.logger.debug(f'Writing {self.ext} to {output_file}.')
             renderPM.drawToFile(drawing, output_file, fmt=self.ext)
+        self.archive(output_file)
 
     def find_and_replace(self, recipes, template):
         if date_text := self.replace_text.get('date_text', None):
@@ -162,4 +165,21 @@ class MenuGenerator:
             f.write(template)
 
     def cleanup(self):
+        self.archive(self.temp_file, target_name=self.input_file)
         os.remove(self.temp_file)
+
+    def archive(self, file, target_name=None):
+        if not target_name:
+            target_name = file
+        if self.logger.loglevel == 10:
+            archive_dir = os.path.join(self.template_dir, 'archive')
+            if not os.path.exists(archive_dir):
+                os.makedirs(archive_dir)
+            filename, ext = os.path.splitext(os.path.basename(target_name))
+            archive_file = (a_file := f"{filename}-{(dt := datetime.now().strftime('%y%m%d'))}")
+            count = 1
+            while os.path.exists(os.path.join(archive_dir, f"{archive_file}{ext}")):
+                archive_file = a_file + '_' + str(count)
+                count += 1
+            # os.rename(self.temp_file, os.path.join(archive_dir, "{archive_file}.{ext}"))
+            copyfile(file, os.path.join(archive_dir, f"{archive_file}{ext}"))
