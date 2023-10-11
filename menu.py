@@ -57,6 +57,7 @@ class MenuGenerator:
             output_file = os.path.join(self.output_dir, f'{self.output_file}.{self.ext}')
             self.logger.debug(f'Writing {self.ext} to {output_file}.')
             renderPM.drawToFile(drawing, temp_output, fmt=self.ext)
+        self.logger.debug(f'Moving file {temp_output} to {output_file}.')
         os.rename(temp_output, output_file)
         self.archive(output_file)
 
@@ -166,6 +167,7 @@ class MenuGenerator:
 
     def cleanup(self):
         self.archive(self.temp_file, target_name=self.input_file)
+        self.logger.debug(f'Removing temporary file {self.temp_file}.')
         os.remove(self.temp_file)
 
     def archive(self, file, target_name=None):
@@ -182,4 +184,6 @@ class MenuGenerator:
                 archive_file = a_file + '_' + str(count)
                 count += 1
             # os.rename(self.temp_file, os.path.join(archive_dir, "{archive_file}.{ext}"))
-            copy2(file, os.path.join(archive_dir, f"{archive_file}{ext}"))
+            af = os.path.join(archive_dir, f"{archive_file}{ext}")
+            self.logger.debug(f'Archiving file {file} to {af}.')
+            copy2(file, af)
