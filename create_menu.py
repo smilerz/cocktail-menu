@@ -255,6 +255,8 @@ if __name__ == "__main__":
 	args = parse_args()
 	validate_args(args)
 	menu = Menu(args)
+	for arg in args._get_kwargs():
+		menu.logger.debug(f'Argument {arg[0]}: {arg[1]}')
 	menu.prepare_data()
 	recipes = menu.select_recipes()
 
