@@ -62,6 +62,15 @@ class MenuGenerator:
         self.archive(output_file)
 
     def find_and_replace(self, recipes, template):
+        def _escape_svg_text(text):
+            escapes = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&apos;'
+            }
+            return re.sub(r'[\&\<\>\"\']', lambda match: escapes[match.group(0)], text)
         if date_text := self.replace_text.get('date_text', None):
             date, ordinal = printable_date(self.options.mp_date, format=date_text.get('format', None))
 
@@ -75,7 +84,7 @@ class MenuGenerator:
 
         for k, v in replacement_dict.items():
             self.api.update_progress()
-            template = re.sub(re.escape(k), v, template)
+            template = re.sub(re.escape(k), _escape_svg_text(v), template)
 
         return template
 
