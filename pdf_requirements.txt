@@ -5,3 +5,4 @@ pulp==2.7.0
 tqdm==4.66.1
 svglib==1.5.1
 rlPyCairo==0.3.0
+tzlocal==5.1

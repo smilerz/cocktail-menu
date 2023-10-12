@@ -2,11 +2,12 @@ import logging
 import re
 import shelve
 import sys
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from functools import wraps
 from uuid import NAMESPACE_OID, uuid3
 
 from tqdm import tqdm
+from tzlocal import get_localzone
 
 try:
 	caches = shelve.open('caches.db', writeback=True)
@@ -118,9 +119,9 @@ def string_to_date(date_str):
 	# Use re.match to check if the string matches the pattern
 	if re.match(pattern, date_str):
 		if date_str[:1] == '-':
-			return datetime.strptime(date_str[1:], '%Y-%m-%d').replace(tzinfo=timezone.utc), False
+			return datetime.strptime(date_str[1:], '%Y-%m-%d').replace(tzinfo=get_localzone()), False
 		else:
-			return datetime.strptime(date_str, '%Y-%m-%d').replace(tzinfo=timezone.utc), True
+			return datetime.strptime(date_str, '%Y-%m-%d').replace(tzinfo=get_localzone()), True
 	else:
 		return False, False
 
@@ -153,8 +154,8 @@ def format_date(string, future=False):
 	# TODO support more time intervals that days
 	offset = timedelta(days=offset)
 	if future:
-		return datetime.now(timezone.utc) + offset, after
-	return datetime.now(timezone.utc) - offset, after
+		return datetime.now(get_localzone()) + offset, after
+	return datetime.now(get_localzone()) - offset, after
 
 
 def printable_date(date, format='short'):
