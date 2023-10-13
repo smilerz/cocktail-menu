@@ -59,6 +59,7 @@ class MenuGenerator:
             renderPM.drawToFile(drawing, temp_output, fmt=self.ext)
         self.logger.debug(f'Moving file {temp_output} to {output_file}.')
         os.rename(temp_output, output_file)
+        os.chmod(output_file, 0o755)
         self.archive(output_file)
 
     def find_and_replace(self, recipes, template):

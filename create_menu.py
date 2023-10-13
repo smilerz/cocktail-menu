@@ -211,6 +211,7 @@ def parse_args():
 	parser.add_argument('--include_children', action='store_true', default=True, help='For keywords and foods, child objects also satisfy the condition.')
 	# mealplan related switches
 	parser.add_argument('--create_mp', action='store_true', default=False, help='Add mealplans for chosen recipes.')
+	parser.add_argument('--share_with', nargs='*', default=[],  help='Share mealplan with ID(s).')
 	parser.add_argument('--mp_date', type=str, default='0days', help='Date to create mealplan in YYYY-MM-DD format or XXdays.')
 	parser.add_argument('--mp_type', help='ID of meal play type; seperate mealplan types are strongly encouraged.')
 	parser.add_argument('--mp_note', type=str, default='Created by: Tandoor Menu Generator.')
@@ -279,7 +280,7 @@ if __name__ == "__main__":
 		mpm = MealPlanManager(menu.tandoor, menu.logger)
 		if args.cleanup_mp:
 			mpm.cleanup_uncooked(date=args.cleanup_date, mp_type=args.mp_type)
-		mpm.create_from_recipes(recipes, args.mp_type, date=args.mp_date, note=args.mp_note)
+		mpm.create_from_recipes(recipes, args.mp_type, date=args.mp_date, note=args.mp_note, share=args.share_with)
 
 	menu.generate_menu_file()
 	if menu.tandoor.progress:

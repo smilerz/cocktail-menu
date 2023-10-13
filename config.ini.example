@@ -33,11 +33,12 @@ choices : 5                                             # number of recipes to c
 [mealplan]
 # configuration for automatically creating meal plan based on chosen recipes
 # create_mp : false                                 # Add mealplans for chosen recipes
+# share_with: []                                    # Share mealplan with ID(s)
 # mp_date : 0days                                   # (required) date to create mealplan in YYYY-MM-DD format or XXdays
 # mp_type :                                         # (required) id of meal play type; seperate mealplan types are strongly encouraged
 # mp_note : Created by: Tandoor Menu Generator
 # cleanup_mp : False                                # Delete uncooked mealplans at next execution
-# cleanup_date : -7days                              # Starting date to cleanup uncooked mealplans in YYYY-MM-DD format or -XXdays
+# cleanup_date : -7days                             # Starting date to cleanup uncooked mealplans in YYYY-MM-DD format or -XXdays
 
 [menufile]
 # create_file: false                                           # Create a menu from an SVG template

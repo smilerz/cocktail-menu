@@ -191,7 +191,7 @@ class TandoorAPI:
         self.logger.debug(f'Returning book {book.id}: {book.name} with {len(recipes)} recipes.')
         return recipes
 
-    def create_meal_plan(self, recipe=None, title=None, servings=1, date=None, note=None, type=None, **kwargs):
+    def create_meal_plan(self, recipe=None, title=None, servings=1, date=None, note=None, type=None, shared=[], **kwargs):
         url = f"{self.url}meal-plan/"
         plan = self.create_object(
             url,
@@ -204,6 +204,7 @@ class TandoorAPI:
                 },
                 'servings': servings,
                 'note': note,
+                'shared': shared,
                 'from_date': date.strftime('%Y-%m-%d'),
                 'to_date': date.strftime('%Y-%m-%d'),
                 'meal_type': self.get_unpaged_results(f'{self.url}meal-type/', type)

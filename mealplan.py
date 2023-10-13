@@ -3,9 +3,9 @@ class MealPlanManager:
         self.api = api
         self.logger = logger
 
-    def create_from_recipes(self, recipes, mp_type, date, note):
+    def create_from_recipes(self, recipes, mp_type, date, note=None, share=[]):
         for r in recipes:
-            self.create(r, mp_type, date, note)
+            self.create(r, mp_type, date, note, share)
 
     def cleanup_uncooked(self, date, mp_type):
         # get all plans of meal type
@@ -18,7 +18,7 @@ class MealPlanManager:
         for plan in plans_to_delete:
             self.api.delete_meal_plan(plan['id'])
 
-    def create(self, recipe, type, date, note):
+    def create(self, recipe, type, date, note, share):
         self.logger.debug(f'Attempting to create mealplan of type {type} for recipe {recipe.name} on {date.strftime("%Y-%m-%d")}')
         self.api.create_meal_plan(
             title=recipe.name,
@@ -26,5 +26,6 @@ class MealPlanManager:
             servings=recipe.servings,
             type=type,
             note=note,
-            date=date
+            date=date,
+            shared=[{'id': x} for x in share]
         )
