@@ -1,4 +1,4 @@
-config.ini
+*.ini
 cocktail-menu.log
 __pycache__/
 .vscode/launch.json
