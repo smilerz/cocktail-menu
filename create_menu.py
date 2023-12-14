@@ -195,11 +195,10 @@ class Menu:
 def parse_args():
     parser = configargparse.ArgParser(
         config_file_parser_class=configargparse.ConfigparserConfigFileParser,
-        default_config_files=['./config.ini'],
         description='Create a custom menu from recipes in Tandoor with defined criteria.'
     )
     # application related switches
-    parser.add_argument('-c', '--my-config', is_config_file=True, help='Specify configuration file.')
+    parser.add_argument('-c', '--my-config', is_config_file=True, default='config.ini', help='Specify configuration file.')
     parser.add_argument('--log', default='info', help='Sets the logging level')
     parser.add_argument('--cache', default='240', help='Minutes to cache Tandoor API results; 0 to disable.')
     parser.add_argument('--url', type=str, required=True, help='The full url of the Tandoor server, including protocol, name, port and path')
