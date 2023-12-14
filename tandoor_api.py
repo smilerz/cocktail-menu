@@ -205,7 +205,7 @@ class TandoorAPI:
         if not isinstance(mealtype_id, list):
             mealtype_id = [mealtype_id]
 
-        url = f"{self.url}meal-plan/?date_from={date.strftime('%Y-%m-%d')}&date_to={date.strftime('%Y-%m-%d')}"
+        url = f"{self.url}meal-plan/?from_date={date.strftime('%Y-%m-%d')}&to_date={date.strftime('%Y-%m-%d')}"
         for mt in mealtype_id:
             url = url + f"&meal_type={mt}"
 
