@@ -4,10 +4,14 @@
 # token : tda_xxxxxxxxxxxxxxxxxxxxxxxxxxxxx             # Tandoor API token.
 # log : DEBUG                                           # valid values are INFO (default) and DEBUG
 cache: 240                                              # Minutes to cache Tandoor API results; 0 to disable.
+# mp_date : 0days                                       # (required) date to create mealplan in YYYY-MM-DD format or XXdays
 
-###  define which recipes to choose from.  If not defined, all recipes will be used.
-### If both are provided or if multiple filters are provided, all results will be used.
-# recipes : {  # recipe search parameters, see /docs/api/ for full list of parameters
+[recipes]
+### By default the menu will selected from all recipes.
+### You can limit the set of recipes by defining one or more of the following arguments: recipes, filter or meal_plan
+
+## recipe search parameters, see /docs/api/ for full list of parameters
+# recipes : {
 #    "query" : "recipe name",
 #    "keywords_or" : [3, 4],
 #    "keywords_and" : [5, 6],
@@ -16,8 +20,14 @@ cache: 240                                              # Minutes to cache Tando
 #    "rating" : 4,
 #    "cookedon" : "-2023-01-01"  # tandoor requires a date, but to use a relative date for this purpose enter "XXdays" and the date will be formatted XX days ago
 #    }
-# filter : []                                           # one or more IDs of CustomFilter that provides list of recipes to choose from.  When not provided will choose from all recipes.
 
+## one or more IDs of CustomFilter that provides list of recipes to choose from.
+# filter : []
+
+## one or more IDs of MealType.  The date of the meal plan will be mp_date chosen above
+# plan_type : []
+
+[conditions]
 choices : 5                                             # number of recipes to choose
 ### conditions are all list of dicts of the format {condition:xx, count:yy, operator: [>= or <= or ==]}
 ### exclude (bool) means all recipes excluding listed keys
@@ -34,7 +44,7 @@ choices : 5                                             # number of recipes to c
 # configuration for automatically creating meal plan based on chosen recipes
 # create_mp : false                                 # Add mealplans for chosen recipes
 # share_with: []                                    # Share mealplan with ID(s)
-# mp_date : 0days                                   # (required) date to create mealplan in YYYY-MM-DD format or XXdays
+
 # mp_type :                                         # (required) id of meal play type; seperate mealplan types are strongly encouraged
 # mp_note : Created by: Tandoor Menu Generator
 # cleanup_mp : False                                # Delete uncooked mealplans at next execution

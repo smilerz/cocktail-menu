@@ -18,7 +18,7 @@ class MenuGenerator:
         self.api = api
         self.logger = logger
         self.template_dir = os.path.join(os.getcwd(), 'templates')
-        self.output_dir = options.output_dir
+        self.output_dir = options.output_dir or self.template_dir
         self.input_file = options.file_template
         self.temp_file = os.path.join(self.output_dir, 'temp.svg')
         self.output_file = self.input_file.split('.')[0]

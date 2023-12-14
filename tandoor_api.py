@@ -88,7 +88,7 @@ class TandoorAPI:
         """
         url = f"{self.url}recipe/"
         recipes = []
-        if params:
+        if params or kwargs.get('all_recipes', False):
             params['include_children'] = self.include_children
             params['page_size'] = self.page_size
             recipes = self.get_paged_results(url, params, **kwargs)
@@ -175,6 +175,8 @@ class TandoorAPI:
         self.logger.debug(f'Returning book {book["id"]}: {book["name"]}.')
         return book
 
+    @display_progress
+    @cached
     def get_book_recipes(self, book, params={}, **kwargs):
         """
         Fetch all recipes in a book from the API.
@@ -190,6 +192,25 @@ class TandoorAPI:
 
         self.logger.debug(f'Returning book {book.id}: {book.name} with {len(recipes)} recipes.')
         return recipes
+
+    def get_mealplan_recipes(self, mealtype_id=[], date=None, params={}, **kwargs):
+        """
+        Fetch all recipes of mealtype.
+        Returns:
+            list: List of recipes.
+        """
+
+        if not mealtype_id:
+            return []
+        if not isinstance(mealtype_id, list):
+            mealtype_id = [mealtype_id]
+
+        url = f"{self.url}meal-plan/?date_from={date.strftime('%Y-%m-%d')}&date_to={date.strftime('%Y-%m-%d')}"
+        for mt in mealtype_id:
+            url = url + f"&meal_type={mt}"
+
+        self.logger.debug(f"Returning recipes from meal plan on {date.strftime('%Y-%m-%d')} with meal play type IDs: {mealtype_id}.")
+        return [r['recipe'] for r in self.get_unpaged_results(url, '', **kwargs)]
 
     def create_meal_plan(self, recipe=None, title=None, servings=1, date=None, note=None, type=None, shared=[], **kwargs):
         url = f"{self.url}meal-plan/"

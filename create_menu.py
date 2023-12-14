@@ -44,8 +44,14 @@ class Menu:
                     x['created'], x['created_after'] = format_date(y)
 
     def prepare_recipes(self):
-        for r in self.tandoor.get_recipes(params=self.options.recipes, filters=self.options.filters):
-            self.recipes.append(Recipe(r))
+        if not self.options.recipes and not self.options.filters and not self.options.plan_type:
+            for r in self.tandoor.get_recipes(all_recipes=True):
+                self.recipes.append(Recipe(r))
+        else:
+            for r in self.tandoor.get_recipes(params=self.options.recipes, filters=self.options.filters):
+                self.recipes.append(Recipe(r))
+            for r in self.tandoor.get_mealplan_recipes(mealtype_id=self.options.plan_type, date=args.mp_date, params=self.options.recipes):
+                self.recipes.append(Recipe(r))
         self.recipes = list(set(menu.recipes))
 
     def prepare_books(self):
@@ -201,6 +207,7 @@ def parse_args():
     # solver related switches
     parser.add_argument('--recipes', type=yaml.safe_load, help='recipes to choose from; search parameters, see /docs/api/ for full list of parameters')
     parser.add_argument('--filters', nargs='*', default=[], help='Array of CustomFilter IDs')
+    parser.add_argument('--plan_type', nargs='*', default=[], help='Array of MealType IDs')
     parser.add_argument('--choices', default=5, help='Number of recipes to choose')
     parser.add_argument('--book', nargs='*', default=[], help="Conditions are all list of dicts of the format {'condition':xx, 'count':yy, 'operator': [>= or <= or ==]}")
     parser.add_argument('--food', nargs='*', default=[], help='Condition = ID or list of IDs')
@@ -211,7 +218,7 @@ def parse_args():
     parser.add_argument('--include_children', action='store_true', default=True, help='For keywords and foods, child objects also satisfy the condition.')
     # mealplan related switches
     parser.add_argument('--create_mp', action='store_true', default=False, help='Add mealplans for chosen recipes.')
-    parser.add_argument('--share_with', nargs='*', default=[],  help='Share mealplan with ID(s).')
+    parser.add_argument('--share_with', nargs='*', default=[], help='Share mealplan with ID(s).')
     parser.add_argument('--mp_date', type=str, default='0days', help='Date to create mealplan in YYYY-MM-DD format or XXdays.')
     parser.add_argument('--mp_type', help='ID of meal play type; seperate mealplan types are strongly encouraged.')
     parser.add_argument('--mp_note', type=str, default='Created by: Tandoor Menu Generator.')
@@ -233,6 +240,7 @@ def parse_args():
 
 def validate_args(args):
     valid = True
+    args.mp_date, _ = format_date(args.mp_date, future=True)
     if args.create_mp:
         if not bool(args.mp_date) & bool(args.mp_type):
             valid = False
@@ -242,7 +250,6 @@ def validate_args(args):
         except (ValueError, TypeError):
             valid = False
             raise RuntimeError('"mp_type" must be a valid Meal Type ID.')
-        args.mp_date, _ = format_date(args.mp_date, future=True)
         if not args.output_dir:
             args.output_dir = os.path.join(os.getcwd(), 'templates')
         if args.cleanup_mp:
