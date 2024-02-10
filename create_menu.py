@@ -265,6 +265,11 @@ if __name__ == "__main__":
     for arg in args._get_kwargs():
         menu.logger.debug(f'Argument {arg[0]}: {arg[1]}')
     menu.prepare_data()
+
+    if len(menu.recipes) < menu.choices:
+        menu.logger.info(f"Not enough recipes to generate a menu.  Only {len(menu.recipes)} recipes to work with.")
+        exit()
+
     recipes = menu.select_recipes()
 
     menu.logger.info(f'Selected {len(recipes)} recipes for the menu.')
