@@ -85,7 +85,7 @@ class Recipe(SetEnabledObjects):
         '''
         lessthan = rating < 0
         if lessthan:
-            return [r for r in recipes if 0 < getattr(r, 'rating', None) <= abs(rating)]
+            return [r for r in recipes if 0 < getattr(r, 'rating', 0) <= abs(rating)]
         else:
             return [r for r in recipes if getattr(r, 'rating', 0) >= rating]
 
