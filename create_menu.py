@@ -158,6 +158,7 @@ class Menu:
 
         # add rating contraints
         for c in self.rating_constraints:
+            
             exclude = str2bool(c.get('exclude', False))
             found_recipes = self.recipes
             if cooked := c.get('cooked', None):
